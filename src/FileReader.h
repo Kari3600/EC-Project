@@ -1,3 +1,6 @@
+#ifndef FILEREADER_H
+#define FILEREADER_H
+
 #include "Problem.h"
 
 #include <array>
@@ -6,3 +9,5 @@
 
 std::vector<std::array<int, 3>> readCSV(std::istream& str);
 Problem readProblem(std::istream& str);
+
+#endif

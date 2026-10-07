@@ -16,5 +16,10 @@ int* RandomSolver::solve(const Problem& problem) {
         std::swap(solution[i], solution[j]);
     }
 
-    return solution;
+    int minLength = problem.minLength();
+    int* croppedSolution = new int[minLength];
+    std::copy(solution, solution + minLength, croppedSolution);
+
+    delete[] solution;
+    return croppedSolution;
 }
