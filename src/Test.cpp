@@ -2,45 +2,85 @@
 #include "Problem.cpp"
 #include "./lab1_algos/RandomSolver.cpp"
 #include "./lab1_algos/NearestNeighborI.cpp"
+#include "./lab1_algos/NearestNeighborII.cpp"
 #include "./lab1_algos/GreedyCycle.cpp"
 
+#include <chrono>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
+#include <string>
 #include <utility>
 #include <vector>
 
 int main() {
     try {
-        std::ifstream file("data/InstanceA.csv");
-        if (!file) {
-            throw std::runtime_error("Failed to open data file");
-        }
-        Problem problem = readProblem(file);
-        std::cout << "Problem size: " << problem.getSize() << std::endl;
+        const std::vector<std::string> instances = {
+            "data/InstanceA.csv",
+            "data/InstanceB.csv"
+        };
 
         RandomSolver randomSolver;
-        GreedySolver1 greedySolver1;
+        NearestNeighborI nearestNeighborI;
+        NearestNeighborII nearestNeighborII;
         GreedyCycle greedyCycle;
         const std::vector<Solver*> solvers = {
             &randomSolver,
-            &greedySolver1,
+            &nearestNeighborI,
+            &nearestNeighborII,
             &greedyCycle
-        };
+            };
 
-        for (const auto& solver : solvers) {
-            int* solution = solver->solve(problem);
-            std::cout << solver->getName() << " solution: ";
-            for (int i = 0; i < problem.minLength(); ++i) {
-                std::cout << solution[i] << " ";
+        for (const auto& path : instances) {
+            std::ifstream file(path);
+            if (!file) {
+                throw std::runtime_error("Failed to open data file " + path);
             }
-            std::cout << std::endl;
-            delete[] solution;
+            Problem problem = readProblem(file);
+            std::cout << "=== " << path << " (size " << problem.getSize() << ")" << std::endl;
+
+            for (const auto& solver : solvers) {
+                const int runs = problem.getSize();
+                int minValue = 0;
+                int maxValue = 0;
+                long long sum = 0;
+                std::vector<int> best;
+                double totalMs = 0;
+
+                for (int start = 0; start < runs; ++start) {
+                    const auto startTime = std::chrono::steady_clock::now();
+                    const std::vector<int> solution = solver->solve(problem, start);
+                    const auto endTime = std::chrono::steady_clock::now();
+                    totalMs += std::chrono::duration<double, std::milli>(endTime - startTime).count();
+
+                    const int value = problem.evaluate(solution);
+
+                    if (start == 0 || value < minValue) {
+                        minValue = value;
+                        best = solution;
+                    }
+                    if (start == 0 || value > maxValue) {
+                        maxValue = value;
+                    }
+                    sum += value;
+                }
+
+                std::cout << solver->getName()
+                          << ": min " << minValue
+                          << ", max " << maxValue
+                          << ", avg " << static_cast<double>(sum) / runs << std::endl;
+                std::cout << "  time: total " << totalMs << " ms"
+                          << ", avg per run " << totalMs / runs << " ms" << std::endl;
+                std::cout << "  best: ";
+                for (const int node : best) {
+                    std::cout << node << " ";
+                }
+                std::cout << std::endl;
+            }
         }
 
-        
     } catch (const std::exception& e) {
-        std::cerr << "Error reading problem: " << e.what() << std::endl;
+        std::cerr << "Error: " << e.what() << std::endl;
         return 1;
     }
 

@@ -2,12 +2,12 @@
 
 #include <vector>
 
-int* GreedySolver1::solve(const Problem& problem) {
+std::vector<int> NearestNeighborI::solve(const Problem& problem, int startNode) {
     const int size = problem.getSize();
     const int minLength = problem.minLength();
-    int* solution = new int[minLength];
+    std::vector<int> solution(minLength);
 
-    int currentNode = 0;
+    int currentNode = startNode;
     std::vector<bool> visited(size, false);
     solution[0] = currentNode;
     visited[currentNode] = true;

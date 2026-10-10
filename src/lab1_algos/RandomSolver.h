@@ -9,7 +9,7 @@ class RandomSolver : public Solver {
         const char* getName() const override {
             return "RandomSolver";
         }
-        int* solve(const Problem& problem) override;
+        std::vector<int> solve(const Problem& problem, int startNode) override;
 };
 
 #endif

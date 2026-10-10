@@ -1,10 +1,11 @@
 #include "RandomSolver.h"
 #include <cstdlib>
 #include <algorithm>
+#include <vector>
 
-int* RandomSolver::solve(const Problem& problem) {
+std::vector<int> RandomSolver::solve(const Problem& problem, int /*startNode*/) {
     const int size = problem.getSize();
-    int* solution = new int[size];
+    std::vector<int> solution(size);
 
     for (int i = 0; i < size; ++i) {
         solution[i] = i;
@@ -16,10 +17,6 @@ int* RandomSolver::solve(const Problem& problem) {
         std::swap(solution[i], solution[j]);
     }
 
-    int minLength = problem.minLength();
-    int* croppedSolution = new int[minLength];
-    std::copy(solution, solution + minLength, croppedSolution);
-
-    delete[] solution;
-    return croppedSolution;
+    solution.resize(problem.minLength());
+    return solution;
 }

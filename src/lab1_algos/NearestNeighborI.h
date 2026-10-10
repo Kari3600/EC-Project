@@ -1,15 +1,15 @@
-#ifndef GREEDYSOLVER1_H
-#define GREEDYSOLVER1_H
+#ifndef NEARESTNEIGHBORI_H
+#define NEARESTNEIGHBORI_H
 
 #include "../Solver.h"
 #include "../Problem.h"
 
-class GreedySolver1 : public Solver {
+class NearestNeighborI : public Solver {
     public:
         const char* getName() const override {
-            return "GreedySolver1";
+            return "NearestNeighborI";
         }
-        int* solve(const Problem& problem) override;
+        std::vector<int> solve(const Problem& problem, int startNode) override;
 };
 
 #endif

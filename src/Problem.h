@@ -2,6 +2,7 @@
 #define PROBLEM_H
 
 #include <cstdlib>
+#include <vector>
 
 class Problem {
     public:
@@ -11,6 +12,7 @@ class Problem {
         const int* const* getWeights() const;
         const int* getCosts() const;
         const int* getWeight(int index) const;
+        int evaluate(const std::vector<int>& solution) const;
 
     private:
         const std::size_t size;

@@ -1,6 +1,8 @@
 #include "Problem.h"
 
 #include <cstddef>
+#include <stdexcept>
+#include <string>
 
 Problem::Problem(std::size_t size, int** weights, int* costs)
         : size(size),
@@ -25,4 +27,20 @@ const int* Problem::getCosts() const {
 
 const int* Problem::getWeight(int index) const {
     return weights[index];
+}
+
+int Problem::evaluate(const std::vector<int>& solution) const {
+    const int length = static_cast<int>(solution.size());
+    if (length != minLength()) {
+        throw std::invalid_argument("Wrong solution length: " + std::to_string(length) +
+                                    ", expected " + std::to_string(minLength()));
+    }
+
+    int total = 0;
+    for (int i = 0; i < length; ++i) {
+        const int from = solution[i];
+        const int to = solution[(i + 1) % length];
+        total += weights[from][to] + costs[from];
+    }
+    return total;
 }

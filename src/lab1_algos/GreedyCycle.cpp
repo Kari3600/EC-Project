@@ -2,18 +2,18 @@
 
 #include <vector>
 
-int* GreedyCycle::solve(const Problem& problem) {
+std::vector<int> GreedyCycle::solve(const Problem& problem, int startNode) {
     const int size = problem.getSize();
     const int minLength = problem.minLength();
-    int* solution = new int[minLength];
+    std::vector<int> solution(minLength);
 
     std::vector<bool> visited(size, false);
-    solution[0] = 0;
-    visited[0] = true;
+    solution[0] = startNode;
+    visited[startNode] = true;
 
     int nextNode = -1;
     int bestScore = 0;
-    for (int candidate = 1; candidate < size; ++candidate) {
+    for (int candidate = 0; candidate < size; ++candidate) {
         if (visited[candidate]) {
             continue;
         }
@@ -29,12 +29,12 @@ int* GreedyCycle::solve(const Problem& problem) {
     solution[1] = nextNode;
     visited[nextNode] = true;
 
-    for (int i = 1; i < minLength; ++i) {
+    for (int i = 2; i < minLength; ++i) {
         int nextNode = -1;
         int nextPosition = -1;
         int bestScore = 0;
 
-        int cycleSize = i + 1;
+        int cycleSize = i;
 
         for (int beforeNode = 0; beforeNode < cycleSize; ++beforeNode) {
             int afterNode = (beforeNode + 1) % cycleSize;
@@ -46,7 +46,7 @@ int* GreedyCycle::solve(const Problem& problem) {
 
                 const int score = problem.getWeight(solution[beforeNode])[candidate] +
                                         problem.getWeight(candidate)[solution[afterNode]] +
-                                        problem.getCosts()[candidate] - 
+                                        problem.getCosts()[candidate] -
                                         currentScore;
 
                 if (nextNode == -1 || score < bestScore) {
