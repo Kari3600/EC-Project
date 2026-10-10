@@ -25,8 +25,8 @@ const int* Problem::getCosts() const {
     return costs;
 }
 
-const int* Problem::getWeight(int index) const {
-    return weights[index];
+int Problem::getDist(int from, int to) const {
+    return weights[from][to];
 }
 
 int Problem::evaluate(const std::vector<int>& solution) const {

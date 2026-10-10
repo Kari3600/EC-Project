@@ -21,7 +21,7 @@ std::vector<int> NearestNeighborI::solve(const Problem& problem, int startNode) 
                 continue;
             }
 
-            const int score = problem.getWeight(currentNode)[candidate] +
+            const int score = problem.getDist(currentNode, candidate) +
                                     problem.getCosts()[candidate];
             if (nextNode == -1 || score < bestScore) {
                 nextNode = candidate;
