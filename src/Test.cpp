@@ -1,8 +1,8 @@
 #include "FileReader.cpp"
 #include "Problem.cpp"
-#include "RandomSolver.cpp"
-#include "GreedySolver1.cpp"
-#include "GreedyCycle.cpp"
+#include "./lab1_algos/RandomSolver.cpp"
+#include "./lab1_algos/NearestNeighborI.cpp"
+#include "./lab1_algos/GreedyCycle.cpp"
 
 #include <fstream>
 #include <iostream>
@@ -12,7 +12,7 @@
 
 int main() {
     try {
-        std::ifstream file("data\\InstanceA.csv");
+        std::ifstream file("data/InstanceA.csv");
         if (!file) {
             throw std::runtime_error("Failed to open data file");
         }

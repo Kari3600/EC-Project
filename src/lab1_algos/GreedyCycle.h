@@ -1,7 +1,7 @@
 #ifndef GREEDYCYCLE_H
 #define GREEDYCYCLE_H
 
-#include "Solver.h"
+#include "../Solver.h"
 
 class GreedyCycle : public Solver {
     public:

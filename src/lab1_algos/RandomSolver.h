@@ -1,8 +1,8 @@
 #ifndef RANDOMSOLVER_H
 #define RANDOMSOLVER_H
 
-#include "Solver.h"
-#include "Problem.h"
+#include "../Solver.h"
+#include "../Problem.h"
 
 class RandomSolver : public Solver {
     public:

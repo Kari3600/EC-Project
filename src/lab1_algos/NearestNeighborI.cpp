@@ -1,4 +1,4 @@
-#include "GreedySolver1.h"
+#include "NearestNeighborI.h"
 
 #include <vector>
 
