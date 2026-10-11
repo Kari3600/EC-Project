@@ -7,8 +7,8 @@
 class Problem {
     public:
         Problem(std::size_t size, int** weights, int* costs);
-        const int getSize() const;
-        const int minLength() const;
+        int getSize() const;
+        int minLength() const;
         const int* const* getWeights() const;
         const int* getCosts() const;
         int getDist(int from, int to) const;

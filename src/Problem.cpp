@@ -9,11 +9,11 @@ Problem::Problem(std::size_t size, int** weights, int* costs)
           weights(weights),
           costs(costs) {}
 
-const int Problem::getSize() const {
+int Problem::getSize() const {
     return static_cast<int>(size);
 }
 
-const int Problem::minLength() const {
+int Problem::minLength() const {
     return (static_cast<int>(size)+1) / 2;
 }
 

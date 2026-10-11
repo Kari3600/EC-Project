@@ -26,12 +26,12 @@ std::vector<int> NearestNeighborII::solve(const Problem& problem, int startNode)
                 }
 
                 if(injectGap == -1){
-                    score = problem.getDist(solution[0], candidate)
+                    score = problem.getDist(candidate, solution[0])
                                     + problem.getCosts()[candidate];
                 }
                 else if (injectGap == i - 1)
                 {
-                    score = problem.getDist(solution[i - 1], candidate)
+                    score = problem.getDist(candidate, solution[i - 1])
                                     + problem.getCosts()[candidate];
                 }
                 else{
