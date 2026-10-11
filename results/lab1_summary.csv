@@ -1,0 +1,9 @@
+instance,method,min,max,avg,avg_time_ms
+InstanceA,RandomSolver,230292,287316,260982,0.00393099
+InstanceA,NearestNeighborI,84362,90075,87476.6,0.0474337
+InstanceA,NearestNeighborII,72328,77022,74306.5,1.24601
+InstanceA,GreedyCycle,72590,75281,73739.3,1.00373
+InstanceB,RandomSolver,181263,231186,206818,0.00270472
+InstanceB,NearestNeighborI,56007,63166,59397.3,0.0363874
+InstanceB,NearestNeighborII,52915,66164,59476.2,1.21992
+InstanceB,GreedyCycle,55655,63734,59650.8,1.00612

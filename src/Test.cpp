@@ -6,6 +6,7 @@
 #include "./lab1_algos/GreedyCycle.cpp"
 
 #include <chrono>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
@@ -31,12 +32,23 @@ int main() {
             &greedyCycle
             };
 
+        // Results for the report and scripts/plot.py
+        std::filesystem::create_directories("results");
+        std::ofstream summaryFile("results/lab1_summary.csv");
+        std::ofstream bestFile("results/lab1_best.csv");
+        if (!summaryFile || !bestFile) {
+            throw std::runtime_error("Failed to create result files in results/");
+        }
+        summaryFile << "instance,method,min,max,avg,avg_time_ms\n";
+        bestFile << "instance,method,value,solution\n";
+
         for (const auto& path : instances) {
             std::ifstream file(path);
             if (!file) {
                 throw std::runtime_error("Failed to open data file " + path);
             }
             Problem problem = readProblem(file);
+            const std::string instanceName = std::filesystem::path(path).stem().string();
             std::cout << "=== " << path << " (size " << problem.getSize() << ")" << std::endl;
 
             for (const auto& solver : solvers) {
@@ -76,8 +88,19 @@ int main() {
                     std::cout << node << " ";
                 }
                 std::cout << std::endl;
+
+                summaryFile << instanceName << "," << solver->getName() << ","
+                            << minValue << "," << maxValue << ","
+                            << static_cast<double>(sum) / runs << ","
+                            << totalMs / runs << "\n";
+                bestFile << instanceName << "," << solver->getName() << "," << minValue << ",";
+                for (std::size_t i = 0; i < best.size(); ++i) {
+                    bestFile << (i == 0 ? "" : " ") << best[i];
+                }
+                bestFile << "\n";
             }
         }
+        std::cout << "Results saved to results/lab1_summary.csv and results/lab1_best.csv" << std::endl;
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
