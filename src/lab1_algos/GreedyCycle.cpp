@@ -19,7 +19,8 @@ std::vector<int> GreedyCycle::solve(const Problem& problem, int startNode) {
         }
 
         const int score = problem.getDist(solution[0], candidate) +
-                                problem.getCosts()[candidate];
+                          problem.getDist(candidate, solution[0]) +
+                          problem.getCosts()[candidate];
 
         if (nextNode == -1 || score < bestScore) {
             nextNode = candidate;
