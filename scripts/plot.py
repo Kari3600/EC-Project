@@ -1,6 +1,6 @@
 """Plot the best solution of each method on each instance.
 
-Reads the best solutions written by Test.cpp (results/lab1_best.csv) and the node
+Reads the best solutions written by scripts/run_experiment.py (results/lab1_best.csv) and the node
 coordinates/costs from data/<instance>.csv, and saves one figure per instance with
 a 2x2 grid of subplots (one per method), named <name>_<instance>.<format>.
 
@@ -34,14 +34,14 @@ EDGE_COLOR = "#52514e"
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Plot best solutions from Test.cpp results.")
+    parser = argparse.ArgumentParser(description="Plot best solutions from run_experiment.py results.")
     parser.add_argument("--out-dir", type=Path, default=REPO_ROOT / "reports" / "figures",
                         help="directory to save the figure in (default: reports/figures)")
     parser.add_argument("--name", default="lab1_plot",
                         help="file name prefix; the instance name is appended (default: lab1_plot)")
     parser.add_argument("--format", default="png", help="image format, e.g. png, pdf, svg (default: png)")
     parser.add_argument("--results", type=Path, default=REPO_ROOT / "results" / "lab1_best.csv",
-                        help="best solutions CSV written by Test.cpp (default: results/lab1_best.csv)")
+                        help="best solutions CSV written by run_experiment.py (default: results/lab1_best.csv)")
     parser.add_argument("--data-dir", type=Path, default=REPO_ROOT / "data",
                         help="directory with instance CSV files (default: data)")
     parser.add_argument("--dpi", type=int, default=200, help="resolution for raster formats (default: 200)")
@@ -77,10 +77,12 @@ def plot_solution(ax, xs, ys, costs, nodes, norm):
     selected = set(nodes)
     others = [i for i in range(len(xs)) if i not in selected]
 
-    # Closed cycle, including the edge from the last node back to the first
-    cycle = nodes + nodes[:1]
-    ax.plot([xs[i] for i in cycle], [ys[i] for i in cycle],
+    # Path through the selected nodes (solid) and the edge closing the cycle,
+    # from the last node back to the first (dotted)
+    ax.plot([xs[i] for i in nodes], [ys[i] for i in nodes],
             color=EDGE_COLOR, linewidth=1, zorder=1)
+    ax.plot([xs[nodes[-1]], xs[nodes[0]]], [ys[nodes[-1]], ys[nodes[0]]],
+            color=EDGE_COLOR, linewidth=1.2, linestyle=":", zorder=1)
 
     # Not selected: same cost colors, just smaller
     ax.scatter([xs[i] for i in others], [ys[i] for i in others],
@@ -110,6 +112,8 @@ def main():
         Line2D([], [], marker="o", linestyle="", markersize=3.5, color="#2a78d6",
                label="not selected node"),
         Line2D([], [], color=EDGE_COLOR, linewidth=1, label="cycle"),
+        Line2D([], [], color=EDGE_COLOR, linewidth=1.2, linestyle=":",
+               label="closing edge (last → first node)"),
     ]
 
     for instance, solutions in best.items():
@@ -137,7 +141,7 @@ def main():
         colorbar.ax.tick_params(colors=TEXT_SECONDARY, labelsize=8)
 
         fig.suptitle(instance, fontsize=12, color=TEXT_PRIMARY)
-        fig.legend(handles=legend_items, loc="outside lower center", ncol=3,
+        fig.legend(handles=legend_items, loc="outside lower center", ncol=4,
                    frameon=False, fontsize=9, labelcolor=TEXT_SECONDARY)
 
         out_path = args.out_dir / f"{args.name}_{instance}.{args.format}"
