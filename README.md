@@ -20,8 +20,11 @@ From the repository root:
 ```bash
 mkdir -p out && g++ -std=c++17 -O2 src/Test.cpp -o out/test && ./out/test   # experiment -> results/
 python3 scripts/plot.py   # figures -> reports/figures/
+(cd reports && pandoc report.md -o report.pdf --pdf-engine=xelatex)   # reports/report.md -> reports/report.pdf
 ```
+Compiling the report needs pandoc and XeLaTeX (Ubuntu: `sudo apt install pandoc texlive-xetex texlive-fonts-recommended`).
+
 
 ## Reports
 
-- Lab 1, greedy heuristics: [reports/lab1.md](reports/lab1.md)
+- Lab 1, greedy heuristics: [reports/lab1_report.pdf](reports/lab1.pdf)
