@@ -364,7 +364,7 @@ the best solutions have been checked with the Solution checker.xlsx provided on 
   candidate–position pairs as their base methods, only keeping the two best
   values instead of one. The measured time is about the same as nearest
   neighbor II for its regret versions, and about 1.4–1.6 times that of
-  greedy cycle for its regret versions, still only about 4 ms per run.
+  greedy cycle for its regret versions due to loop order change and less optimal memory management. But the computational comlexity is the sam and the difference is only about 4 ms per run.
 
 # Source code
 

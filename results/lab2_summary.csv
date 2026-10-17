@@ -1,0 +1,17 @@
+instance,method,min,max,avg,avg_time_ms
+InstanceA,RandomSolver,229522,286183,260175.53,0.0071
+InstanceA,NearestNeighborI,84362,90075,87476.63,0.0915
+InstanceA,NearestNeighborII,72328,77022,74306.53,2.8229
+InstanceA,GreedyCycle,72590,75281,73739.29,2.4350
+InstanceA,NearestNeighborII_2regret_a1,111527,133181,122860.66,2.9022
+InstanceA,NearestNeighborII_2regret_a0.5,72419,78504,75561.20,2.8634
+InstanceA,GreedyCycle_2regret_a1,112654,130391,120994.80,3.7590
+InstanceA,GreedyCycle_2regret_a0.5,72011,75532,73353.18,3.9331
+InstanceB,RandomSolver,186703,227217,205847.26,0.0079
+InstanceB,NearestNeighborI,56007,63166,59397.33,0.0938
+InstanceB,NearestNeighborII,52915,66164,59476.22,2.9698
+InstanceB,GreedyCycle,55655,63734,59650.85,2.5209
+InstanceB,NearestNeighborII_2regret_a1,69032,80767,74763.39,2.8818
+InstanceB,NearestNeighborII_2regret_a0.5,50485,61406,55698.34,2.8230
+InstanceB,GreedyCycle_2regret_a1,69609,78175,73459.29,3.9488
+InstanceB,GreedyCycle_2regret_a0.5,52731,63370,57862.86,3.5743
