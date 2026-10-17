@@ -8,6 +8,7 @@ monofont: DejaVu Sans Mono
 header-includes:
   - \usepackage{float}
   - \floatplacement{figure}{H}
+  - \usepackage{booktabs}
 ---
 
 # Problem story
@@ -146,14 +147,9 @@ return C
 
 # Computational experiment
 
-Each greedy method, old and new, was run 200 times per instance, once starting
-from each node. The random method was run 200 times per instance with seeds
-1–200. The tables report the minimum, maximum and average value of the
-objective function over these runs, and the average running time of a single
-run. The best value of each objective statistic among the non-random methods
-is shown in bold.
+Each greedy method, old and new, was run 200 times per instance, like in the lab1 experiments.
 
-Each run is a separate execution of the `test_algo` program (g++ with `-O2`),
+*Remark that we changed how the time is measured* — Each run is a separate execution of the `test_algo` program (g++ with `-O2`),
 and only the time of the `solve` call is measured. Because every run starts in
 a fresh process with cold caches, the times are about 2–2.5 times higher than
 those in the lab 1 report, where all runs shared one process. The comparison
@@ -163,29 +159,44 @@ because it now uses different seeds.
 
 **Instance A**
 
-| Method                               |        Min |        Max |       Average | Time per run |
-|:-------------------------------------|-----------:|-----------:|--------------:|-------------:|
-| Random solution                      |    229 522 |    286 183 |    260 175.53 |     0.007 ms |
-| Nearest neighbor I                   |     84 362 |     90 075 |     87 476.63 |     0.092 ms |
-| Nearest neighbor II                  |     72 328 |     77 022 |     74 306.53 |     2.823 ms |
-| Greedy cycle                         |     72 590 | **75 281** |     73 739.29 |     2.435 ms |
-| Nearest neighbor II 2-regret         |    111 527 |    133 181 |    122 860.66 |     2.902 ms |
-| Nearest neighbor II weighted 2-regret|     72 419 |     78 504 |     75 561.20 |     2.863 ms |
-| Greedy cycle 2-regret                |    112 654 |    130 391 |    120 994.80 |     3.759 ms |
-| Greedy cycle weighted 2-regret       | **72 011** |     75 532 | **73 353.18** |     3.933 ms |
+\begin{center}
+\begin{tabular}{lrrrr}
+\toprule
+Method & Min & Max & Average & Time per run \\
+\midrule
+Random solution                       & 229 522 & 286 183 & 260 175.53 & 0.007 ms \\
+Nearest neighbor I                    & 84 362  & 90 075  & 87 476.63  & 0.092 ms \\
+Nearest neighbor II                   & 72 328  & 77 022  & 74 306.53  & 2.823 ms \\
+Greedy cycle                          & 72 590  & \textbf{75 281} & 73 739.29 & 2.435 ms \\
+\midrule[1pt]
+Nearest neighbor II 2-regret          & 111 527 & 133 181 & 122 860.66 & 2.902 ms \\
+Nearest neighbor II weighted 2-regret & 72 419  & 78 504  & 75 561.20  & 2.863 ms \\
+Greedy cycle 2-regret                 & 112 654 & 130 391 & 120 994.80 & 3.759 ms \\
+Greedy cycle weighted 2-regret        & \textbf{72 011} & 75 532 & \textbf{73 353.18} & 3.933 ms \\
+\bottomrule
+\end{tabular}
+\end{center}
+
 
 **Instance B**
+\begin{center}
+\begin{tabular}{lrrrr}
+\toprule
+Method & Min & Max & Average & Time per run \\
+\midrule
+Random solution                       & 186 703 & 227 217 & 205 847.26 & 0.008 ms \\
+Nearest neighbor I                    & 56 007  & 63 166  & 59 397.33  & 0.094 ms \\
+Nearest neighbor II                   & 52 915  & 66 164  & 59 476.22  & 2.970 ms \\
+Greedy cycle                          & 55 655  & 63 734  & 59 650.85  & 2.521 ms \\
+\midrule[1pt]
+Nearest neighbor II 2-regret          & 69 032  & 80 767  & 74 763.39  & 2.882 ms \\
+Nearest neighbor II weighted 2-regret & \textbf{50 485} & \textbf{61 406} & \textbf{55 698.34} & 2.823 ms \\
+Greedy cycle 2-regret                 & 69 609  & 78 175  & 73 459.29  & 3.949 ms \\
+Greedy cycle weighted 2-regret        & 52 731  & 63 370  & 57 862.86  & 3.574 ms \\
+\bottomrule
+\end{tabular}
+\end{center}
 
-| Method                               |        Min |        Max |       Average | Time per run |
-|:-------------------------------------|-----------:|-----------:|--------------:|-------------:|
-| Random solution                      |    186 703 |    227 217 |    205 847.26 |     0.008 ms |
-| Nearest neighbor I                   |     56 007 |     63 166 |     59 397.33 |     0.094 ms |
-| Nearest neighbor II                  |     52 915 |     66 164 |     59 476.22 |     2.970 ms |
-| Greedy cycle                         |     55 655 |     63 734 |     59 650.85 |     2.521 ms |
-| Nearest neighbor II 2-regret         |     69 032 |     80 767 |     74 763.39 |     2.882 ms |
-| Nearest neighbor II weighted 2-regret| **50 485** | **61 406** | **55 698.34** |     2.823 ms |
-| Greedy cycle 2-regret                |     69 609 |     78 175 |     73 459.29 |     3.949 ms |
-| Greedy cycle weighted 2-regret       |     52 731 |     63 370 |     57 862.86 |     3.574 ms |
 
 "2-regret" denotes $\alpha = 1$ and "weighted 2-regret" denotes $\alpha = 0.5$.
 
@@ -198,7 +209,7 @@ each method.
 
 ![Best objective value as a function of $\alpha$](figures/lab2_alpha_sweep.png)
 
-Best objective value for each $\alpha$ (the best value in each column in bold):
+To show the exact values we also present the table below
 
 | $\alpha$ | NN II, A   | Greedy cycle, A | NN II, B   | Greedy cycle, B |
 |---------:|-----------:|----------------:|-----------:|----------------:|
@@ -227,8 +238,7 @@ last node back to the first.
 
 # Best solutions
 
-Node indices start from 0. Each list gives the order of nodes in the cycle;
-the last node connects back to the first. The best solutions of the lab 1
+The best solutions of the lab 1
 methods are listed in the lab 1 report.
 
 ## Instance A
@@ -326,27 +336,18 @@ the best solutions have been checked with the Solution checker.xlsx provided on 
 - **The weighted 2-regret methods give the best solutions so far.** Greedy
   cycle with weighted 2-regret found the best solution on instance A (72 011)
   and nearest neighbor II with weighted 2-regret on instance B (50 485). The
-  best lab 1 solutions were 72 328 and 52 915, so the improvement is 0.4% on
-  instance A and 4.6% on instance B. On average, the weighted versions improve
-  their base methods by 3.0% (greedy cycle) and 6.4% (nearest neighbor II) on
-  instance B. On instance A the gains are small: greedy cycle improves by 0.5%,
-  and nearest neighbor II is even 1.7% worse on average.
+  best lab 1 solutions were 72 328 and 52 915. On average, the weighted versions improve
+  their base methods by a few percent but there are cases when the solutions are worse in weighted versions (mostly on instance B)
 - **Pure 2-regret is a poor criterion on its own, because it ignores node
-  costs.** With $\alpha = 1$ the average results are 27–65% worse than with
-  $\alpha = 0.5$, although still 2–3 times better than random solutions. The
-  cost $c(u)$ of a node is the same for every position, so it cancels out in
-  the regret $\Delta_2(u) - \Delta_1(u)$: the regret depends only on distances.
+  costs.**
+    - With $\alpha = 1$ the average results are 30–60% worse than with
+  $\alpha = 0.5$, although still 2–3 times better than random solutions. 
+  - with α = 1 the regret depends only on distances.
   The cycles are therefore not long (on instance A the best 2-regret cycle is
-  even the shortest of all methods, 19 974), but the selected nodes are
-  expensive. The total node cost of the best 2-regret solutions is 91 553 and
-  91 022 on instance A, compared with about 52 000 for the other greedy
-  methods and 87 753 for the best random solution. In the figures, the 2-regret
-  cycles pass through many dark nodes. In terms of the story: a student who
-  only avoids regret picks the most tiring classes, as long as they are
-  "now or never".
+  even the shortest of all methods), but the selected nodes are expensive.
 - **A moderate weight of the regret is best.** For $\alpha$ between 0 and
   about 0.7 the best values change little on instance A and improve on
-  instance B, with the best $\alpha$ between 0.3 and 0.6 for both methods. For
+  instance B. For
   $\alpha = 0.8$ the results get worse, and for $\alpha = 0.9$ and $1$ they
   deteriorate sharply, as the node costs lose their weight. Equal weights
   ($\alpha = 0.5$) are a reasonable default but not the best choice for every
@@ -356,10 +357,9 @@ the best solutions have been checked with the Solution checker.xlsx provided on 
   nearest neighbor II solutions from lab 1 had one crossing on instance A and
   two on instance B. A crossing always means that a 2-opt move can still
   shorten the cycle; its absence, however, does not guarantee optimality, so
-  local search methods may improve these solutions further.
+  local search methods may improve these solutions further in the next lab.
 - **The starting node still matters.** On instance B the weighted versions
-  have a spread of about 20% between the best and the worst start, so running
-  them from many starting nodes and keeping the best remains worthwhile.
+  have a spread of about 20% between the best and the worst start.
 - **The regret costs little extra time.** The new methods evaluate the same
   candidate–position pairs as their base methods, only keeping the two best
   values instead of one. The measured time is about the same as nearest
