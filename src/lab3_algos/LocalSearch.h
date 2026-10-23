@@ -26,6 +26,22 @@ class LocalSearch : public Solver {
         }
         std::vector<int> solve(const Problem& problem, int startNode) override;
 
+        // construction heuristic used for the greedy start (test_algo --init); not owned
+        void setInitialSolver(Solver* solver) {
+            initialSolver = solver;
+        }
+        bool needsInitialSolver() const {
+            return start == StartType::Greedy;
+        }
+        // starting solution of the last solve() call
+        const std::vector<int>& getInitialSolution() const {
+            return initialSolution;
+        }
+        // number of improving moves applied in the last solve() call
+        int getSteps() const {
+            return steps;
+        }
+
     private:
         std::vector<int> getInitialGreedy(const Problem& problem, int startNode) const;
         std::vector<int> getInitialRandom(const Problem& problem, int startNode) const;
@@ -48,6 +64,9 @@ class LocalSearch : public Solver {
         StartType start;
         std::mt19937 rng;
         std::string name;
+        Solver* initialSolver = nullptr;
+        std::vector<int> initialSolution;
+        int steps = 0;
 };
 
 #endif

@@ -3,14 +3,16 @@
 #include <vector>
 #include <algorithm>
 #include <cstdlib>
+#include <stdexcept>
 
 #include "../lab1_algos/RandomSolver.h"
-#include "../lab2_algos/GreedyCycle_2regret.h"
 
-// best construction heuristic from the previous labs (weighted 2-regret, alpha = 0.5)
+// construction heuristic chosen per instance (best one from the previous labs)
 std::vector<int> LocalSearch::getInitialGreedy(const Problem& problem, int startNode) const {
-    GreedyCycle_2regret greedyCycle(0.5);
-    return greedyCycle.solve(problem, startNode);
+    if (initialSolver == nullptr) {
+        throw std::logic_error(name + " needs a construction heuristic for the starting solution (--init)");
+    }
+    return initialSolver->solve(problem, startNode);
 }
 
 std::vector<int> LocalSearch::getInitialRandom(const Problem& problem, int startNode) const {
@@ -216,12 +218,14 @@ std::vector<int> LocalSearch::solve(const Problem& problem, int startNode) {
     std::vector<int> solution = (start == StartType::Greedy)
                                     ? getInitialGreedy(problem, startNode)
                                     : getInitialRandom(problem, startNode);
+    initialSolution = solution;
 
     std::vector<bool> selected(problem.getSize(), false);
     for (int node : solution) {
         selected[node] = true;
     }
 
+    steps = 0;
     while (true) {
         bool improved = (search == SearchType::Greedy)
                             ? greedyStep(problem, solution, selected)
@@ -229,6 +233,7 @@ std::vector<int> LocalSearch::solve(const Problem& problem, int startNode) {
         if (!improved) {
             break;
         }
+        ++steps;
     }
     return solution;
 }

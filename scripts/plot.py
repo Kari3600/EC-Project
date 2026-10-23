@@ -45,6 +45,8 @@ def parse_args():
     parser.add_argument("--data-dir", type=Path, default=REPO_ROOT / "data",
                         help="directory with instance CSV files (default: data)")
     parser.add_argument("--dpi", type=int, default=200, help="resolution for raster formats (default: 200)")
+    parser.add_argument("--method-prefix", default="",
+                        help="plot only methods whose name starts with this, e.g. LS_ (default: all)")
     return parser.parse_args()
 
 
@@ -63,11 +65,13 @@ def read_instance(path):
     return xs, ys, costs
 
 
-def read_best(path):
+def read_best(path, method_prefix=""):
     """Return {instance: [(method, value, [nodes...]), ...]} keeping file order."""
     best = {}
     with open(path, newline="") as f:
         for row in csv.DictReader(f):
+            if not row["method"].startswith(method_prefix):
+                continue
             nodes = [int(v) for v in row["solution"].split()]
             best.setdefault(row["instance"], []).append((row["method"], int(row["value"]), nodes))
     return best
@@ -103,7 +107,7 @@ def plot_solution(ax, xs, ys, costs, nodes, norm):
 
 def main():
     args = parse_args()
-    best = read_best(args.results)
+    best = read_best(args.results, args.method_prefix)
     args.out_dir.mkdir(parents=True, exist_ok=True)
 
     legend_items = [
