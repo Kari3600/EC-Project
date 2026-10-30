@@ -8,15 +8,11 @@
 #include "../lab1_algos/RandomSolver.h"
 
 // construction heuristic chosen per instance (best one from the previous labs)
-std::vector<int> LocalSearch::getInitialGreedy(const Problem& problem, int startNode) const {
+std::vector<int> LocalSearch::getInitialSolution(const Problem& problem, int seed) const {
     if (initialSolver == nullptr) {
         throw std::logic_error(name + " needs a construction heuristic for the starting solution (--init)");
     }
-    return initialSolver->solve(problem, startNode);
-}
-
-std::vector<int> LocalSearch::getInitialRandom(const Problem& problem, int startNode) const {
-    return RandomSolver().solve(problem, startNode);
+    return initialSolver->solve(problem, seed);
 }
 
 // deltas: change of the objective after the move, negative = improvement
@@ -211,13 +207,11 @@ bool LocalSearch::steepestStep(const Problem& problem, std::vector<int>& solutio
 
 
 
-std::vector<int> LocalSearch::solve(const Problem& problem, int startNode) {
+std::vector<int> LocalSearch::solve(const Problem& problem, int seed) {
     rng.seed(std::rand());   // seeded by test_algo --seed, so every run is different but reproducible
 
     // we need to remember to count later how much time did it take compared to the whole algorithm
-    std::vector<int> solution = (start == StartType::Greedy)
-                                    ? getInitialGreedy(problem, startNode)
-                                    : getInitialRandom(problem, startNode);
+    std::vector<int> solution = getInitialSolution(problem, seed);
     initialSolution = solution;
 
     std::vector<bool> selected(problem.getSize(), false);

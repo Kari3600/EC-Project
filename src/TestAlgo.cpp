@@ -28,12 +28,15 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <map>
 
-// Algorithm that takes a weight alpha (--alpha); created after the arguments are read
-struct WeightedAlgorithm {
-    std::string name;
-    std::function<std::shared_ptr<Solver>(double alpha)> create;
-};
+static void printAny(std::any any) {
+    if (int* val = std::any_cast<int>(&any)) {
+        std::cout << *val;
+    } else {
+        throw "Unsupported printing type: "+std::string(any.type().name());
+    }
+}
 
 static std::string toLower(std::string text) {
     std::transform(text.begin(), text.end(), text.begin(),
@@ -41,178 +44,150 @@ static std::string toLower(std::string text) {
     return text;
 }
 
-static double parseAlpha(const std::string& text) {
+static float asFloat(std::string text) {
     try {
-        std::size_t used = 0;
-        const double value = std::stod(text, &used);
-        if (used == text.size()) {
-            return value;
-        }
-    } catch (const std::exception&) {
+        return std::stof(text);
+    } catch (std::invalid_argument) {
+        throw std::invalid_argument("'"+text+"' cannot be parsed as float.");
     }
-    throw std::invalid_argument("--alpha must be a number, got: " + text);
+}
+
+static int asInt(std::string text) {
+    try {
+        return std::stoi(text);
+    } catch (std::invalid_argument) {
+        throw std::invalid_argument("'"+text+"' cannot be parsed as int.");
+    }
+}
+
+static std::string stripOfQuotes(std::string text) {
+    int size = text.size();
+    if (text.at(0) == text.at(size-1)) {
+        if (text.at(0) == '"' || text.at(0) == '\'') {
+            return text.substr(1,size-2);
+        }
+    }
+    return text;
+}
+
+static std::string stripLeadingDashes(std::string str) {
+    str.erase(0, str.find_first_not_of('-'));
+    return str;
+}
+
+struct ProgramArgs {
+    std::map<std::string, std::string> args;
+    std::vector<std::string> unnamedArgs;
+
+    std::string get(int pos) {
+        if (pos >= unnamedArgs.size()) {
+            throw std::invalid_argument("expected at least " + std::to_string(pos+1) + " arguments, found " + std::to_string(unnamedArgs.size()));
+        }
+        return unnamedArgs[pos];
+    }
+
+    std::string get(std::string name) {
+        auto it = args.find(name);
+        if (it == args.end()) {
+            throw std::invalid_argument("argument '" + name + "' was expected but not found");
+        }
+        return it->second;
+    }
+
+    std::string getOrDefault(int pos, std::string defaultValue) {
+        if (pos >= unnamedArgs.size()) {
+            return defaultValue;
+        }
+        return unnamedArgs[pos];
+    }
+
+    std::string getOrDefault(std::string name, std::string defaultValue) {
+        auto it = args.find(name);
+        if (it == args.end()) {
+            return defaultValue;
+        }
+        return it->second;
+    }
+
+    ProgramArgs(int argc, char* argv[]) {
+        for (int i = 1; i < argc; i++) {
+            char* arg = argv[i];
+            if (arg[0] == '-') {
+                std::string argName = stripLeadingDashes(std::string(arg));
+                std::string argValue;
+                if (++i == argc) {
+                    argValue = "true";
+                } else {
+                    char* arg2 = argv[i];
+                    if (arg2[0] == '-') {
+                        argValue = "true";
+                        i--;
+                    } else {
+                        argValue = stripOfQuotes(std::string(arg2));
+                    }
+                }
+                args[argName] = argValue;
+            } else {
+                unnamedArgs.push_back(stripOfQuotes(std::string(arg)));
+            }
+        }
+    }
+};
+
+Solver* createSolver(std::string solverName, ProgramArgs& args) {
+    if (solverName == "RandomSolver") {
+        return new RandomSolver();
+    } else if (solverName == "GreedyCycle") {
+        return new GreedyCycle();
+    } else if (solverName == "NearestNeighborI") {
+        return new NearestNeighborI();
+    } else if (solverName == "NearestNeighborII") {
+        return new NearestNeighborII();
+    } else if (solverName == "GreedyCycle_2regret") {
+        float alpha = asFloat(args.getOrDefault("alpha", "0.5"));
+        return new GreedyCycle_2regret(alpha);
+    } else if (solverName == "NearestNeighborII_2regret") {
+        float alpha = asFloat(args.getOrDefault("alpha", "0.5"));
+        return new NearestNeighborII_2regret(alpha);
+    } else if (solverName == "LocalSearch") {
+        SearchType searchType = (args.get("searchType") == "Steepest") ? SearchType::Steepest : SearchType::Greedy;
+        IntraMove intraMove = (args.get("intraMove") == "Nodes") ? IntraMove::Nodes : IntraMove::Edges;
+        Solver* initialSolver = createSolver(args.get("initialSolver"), args); 
+        return new LocalSearch(searchType, intraMove, initialSolver);
+    } else {
+        throw std::invalid_argument("Solver '" + solverName + "' does not exist.");
+    }
 }
 
 int main(int argc, char* argv[]) {
-    RandomSolver randomSolver;
-    NearestNeighborI nearestNeighborI;
-    NearestNeighborII nearestNeighborII;
-    GreedyCycle greedyCycle;
-    // All 8 local search variants, e.g. LS_greedy_edges_random
-    std::vector<LocalSearch> localSearches;
-    for (const SearchType search : {SearchType::Greedy, SearchType::Steepest}) {
-        for (const IntraMove intra : {IntraMove::Nodes, IntraMove::Edges}) {
-            for (const StartType start : {StartType::Random, StartType::Greedy}) {
-                localSearches.emplace_back(search, intra, start);
-            }
-        }
+    ProgramArgs args(argc, argv);
+    Solver* solver = createSolver(args.get(0), args);
+    
+    int seed = asInt(args.getOrDefault("seed", "0"));
+    std::string instancePath = args.get(1);
+    std::ifstream file(instancePath);
+    if (!file) {
+        throw std::runtime_error("Failed to open data file " + instancePath);
     }
-    // To add an algorithm: include its .cpp above and add it to one of the lists
-    std::vector<Solver*> solvers = {
-        &randomSolver,
-        &nearestNeighborI,
-        &nearestNeighborII,
-        &greedyCycle
-    };
-    for (LocalSearch& localSearch : localSearches) {
-        solvers.push_back(&localSearch);
+    Problem problem = readProblem(file);
+
+    const auto startTime = std::chrono::steady_clock::now();
+    const std::vector<int> solution = solver->solve(problem, seed);
+    const auto endTime = std::chrono::steady_clock::now();
+
+    std::cout << "Solution: ";
+    for (auto val : solution) {
+        std::cout << val << " ";
     }
-    const std::vector<WeightedAlgorithm> weightedAlgorithms = {
-        {"NearestNeighborII_2regret",
-         [](double alpha) { return std::make_shared<NearestNeighborII_2regret>(alpha); }},
-        {"GreedyCycle_2regret",
-         [](double alpha) { return std::make_shared<GreedyCycle_2regret>(alpha); }}
-    };
-    const double defaultAlpha = 0.5;
-
-    try {
-        // Split arguments into positional ones and the --alpha / --seed / --init options
-        std::vector<std::string> positional;
-        double alpha = defaultAlpha;
-        bool alphaGiven = false;
-        std::string initName;
-        for (int i = 1; i < argc; ++i) {
-            const std::string arg = argv[i];
-            if (arg == "--alpha") {
-                if (i + 1 >= argc) {
-                    throw std::invalid_argument("--alpha needs a value");
-                }
-                alpha = parseAlpha(argv[++i]);
-                alphaGiven = true;
-            } else if (arg == "--seed") {
-                // Seed for rand() (RandomSolver, local search); without it every run gives the same random solution
-                if (i + 1 >= argc) {
-                    throw std::invalid_argument("--seed needs a value");
-                }
-                std::srand(static_cast<unsigned>(std::stoul(argv[++i])));
-            } else if (arg == "--init") {
-                // Construction heuristic for local search with a greedy start (weighted ones use the default alpha)
-                if (i + 1 >= argc) {
-                    throw std::invalid_argument("--init needs an algorithm name");
-                }
-                initName = argv[++i];
-            } else {
-                positional.push_back(arg);
-            }
-        }
-
-        if (positional.size() < 2 || positional.size() > 3) {
-            std::cerr << "Usage: " << argv[0]
-                      << " <algorithm> <instance.csv> [startNode] [--alpha A] [--seed S] [--init H]\n"
-                      << "Algorithms:";
-            for (const auto& solver : solvers) {
-                std::cerr << " " << solver->getName();
-            }
-            for (const auto& weighted : weightedAlgorithms) {
-                std::cerr << " " << weighted.name << " (--alpha, default " << defaultAlpha << ")";
-            }
-            std::cerr << std::endl;
-            return 1;
-        }
-        const std::string& algorithmName = positional[0];
-        const std::string& instancePath = positional[1];
-
-        // Find an algorithm by name; a weighted one is created with the given alpha and kept in owner
-        // (shared_ptr destroys the real type, Solver has no virtual destructor)
-        auto findSolver = [&](const std::string& name, double alphaValue,
-                              std::shared_ptr<Solver>& owner) -> Solver* {
-            for (const auto& candidate : solvers) {
-                if (toLower(candidate->getName()) == toLower(name)) {
-                    return candidate;
-                }
-            }
-            for (const auto& weighted : weightedAlgorithms) {
-                if (toLower(weighted.name) == toLower(name)) {
-                    owner = weighted.create(alphaValue);
-                    return owner.get();
-                }
-            }
-            throw std::invalid_argument("Unknown algorithm: " + name);
-        };
-
-        std::shared_ptr<Solver> weightedSolver;
-        Solver* solver = findSolver(algorithmName, alpha, weightedSolver);
-        if (alphaGiven && weightedSolver == nullptr) {
-            throw std::invalid_argument(algorithmName + " does not take --alpha");
-        }
-
-        // Local search with a greedy start builds its starting solution with the --init heuristic
-        LocalSearch* localSearch = dynamic_cast<LocalSearch*>(solver);
-        std::shared_ptr<Solver> initialOwner;
-        Solver* initialSolver = nullptr;
-        if (localSearch != nullptr && localSearch->needsInitialSolver()) {
-            if (initName.empty()) {
-                throw std::invalid_argument(algorithmName + " needs --init <construction heuristic>");
-            }
-            initialSolver = findSolver(initName, defaultAlpha, initialOwner);
-            if (dynamic_cast<LocalSearch*>(initialSolver) != nullptr) {
-                throw std::invalid_argument("--init must be a construction heuristic, not " + initName);
-            }
-            localSearch->setInitialSolver(initialSolver);
-        } else if (!initName.empty()) {
-            throw std::invalid_argument(algorithmName + " does not take --init");
-        }
-
-        std::ifstream file(instancePath);
-        if (!file) {
-            throw std::runtime_error("Failed to open data file " + instancePath);
-        }
-        Problem problem = readProblem(file);
-
-        const int startNode = positional.size() == 3 ? std::stoi(positional[2]) : 0;
-        if (startNode < 0 || startNode >= problem.getSize()) {
-            throw std::invalid_argument("startNode must be between 0 and " +
-                                        std::to_string(problem.getSize() - 1));
-        }
-
-        const auto startTime = std::chrono::steady_clock::now();
-        const std::vector<int> solution = solver->solve(problem, startNode);
-        const auto endTime = std::chrono::steady_clock::now();
-
-        std::cout << "Algorithm: " << solver->getName() << std::endl;
-        std::cout << "Instance:  " << instancePath << " (size " << problem.getSize() << ")" << std::endl;
-        std::cout << "Start:     " << startNode << std::endl;
-        std::cout << "Objective: " << problem.evaluate(solution) << std::endl;
-        std::cout << "Time:      "
-                  << std::chrono::duration<double, std::milli>(endTime - startTime).count()
-                  << " ms" << std::endl;
-        if (localSearch != nullptr) {
-            // Starting solution of the local search (built inside solve, so included in Time)
-            if (initialSolver != nullptr) {
-                std::cout << "Init:      " << initialSolver->getName() << std::endl;
-            }
-            std::cout << "Initial:   " << problem.evaluate(localSearch->getInitialSolution()) << std::endl;
-            std::cout << "Steps:     " << localSearch->getSteps() << std::endl;
-        }
-        std::cout << "Solution: ";
-        for (const int node : solution) {
-            std::cout << " " << node;
-        }
+    std::cout << std::endl;
+    std::cout << "Objective: " << problem.evaluate(solution) << std::endl;
+    std::cout << "Time:      "
+                << std::chrono::duration<double, std::milli>(endTime - startTime).count()
+                << " ms" << std::endl;
+    for (auto [statName, statValue] : solver->getLastRunStatistics()) {
+        std::cout << statName << ": ";
+        printAny(statValue);
         std::cout << std::endl;
-
-    } catch (const std::exception& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
-        return 1;
     }
 
     return 0;

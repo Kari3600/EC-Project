@@ -8,31 +8,26 @@
 #include <string>
 #include <vector>
 
-enum class SearchType { Greedy, Steepest };
-enum class IntraMove { Nodes, Edges };
-enum class StartType { Random, Greedy };
+enum SearchType { Greedy, Steepest };
+enum IntraMove { Nodes, Edges };
 
 class LocalSearch : public Solver {
     public:
-        LocalSearch(SearchType search, IntraMove intra, StartType start)
-            : search(search), intra(intra), start(start) {
+        LocalSearch(SearchType search, IntraMove intra, Solver* initialSolver)
+            : search(search), intra(intra), initialSolver(initialSolver) {
             name = std::string("LS_")
                  + (search == SearchType::Greedy ? "greedy" : "steepest")
                  + (intra == IntraMove::Nodes ? "_nodes" : "_edges")
-                 + (start == StartType::Random ? "_random" : "_greedy");   // e.g. LS_greedy_edges_random
+                 + (initialSolver->getName());   // e.g. LS_greedy_edges_random
         }
         const char* getName() const override {
             return name.c_str();
         }
-        std::vector<int> solve(const Problem& problem, int startNode) override;
+        std::vector<int> solve(const Problem& problem, int seed) override;
+        std::map<std::string, std::any> getLastRunStatistics() const override {
+            return {{"Steps", steps}};
+        }
 
-        // construction heuristic used for the greedy start (test_algo --init); not owned
-        void setInitialSolver(Solver* solver) {
-            initialSolver = solver;
-        }
-        bool needsInitialSolver() const {
-            return start == StartType::Greedy;
-        }
         // starting solution of the last solve() call
         const std::vector<int>& getInitialSolution() const {
             return initialSolution;
@@ -43,8 +38,7 @@ class LocalSearch : public Solver {
         }
 
     private:
-        std::vector<int> getInitialGreedy(const Problem& problem, int startNode) const;
-        std::vector<int> getInitialRandom(const Problem& problem, int startNode) const;
+        std::vector<int> getInitialSolution(const Problem& problem, int seed) const;
 
         // deltas: change of the objective after the move, negative = improvement
         int interDelta(const Problem& problem, const std::vector<int>& solution, int position, int newNode) const;
@@ -61,10 +55,9 @@ class LocalSearch : public Solver {
 
         SearchType search;
         IntraMove intra;
-        StartType start;
         std::mt19937 rng;
         std::string name;
-        Solver* initialSolver = nullptr;
+        Solver* initialSolver;
         std::vector<int> initialSolution;
         int steps = 0;
 };

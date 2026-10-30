@@ -20,6 +20,8 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap, Normalize
 from matplotlib.lines import Line2D
 
+import re
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 # Sequential blue ramp (light -> dark) for node cost; lightest steps are skipped
@@ -45,8 +47,8 @@ def parse_args():
     parser.add_argument("--data-dir", type=Path, default=REPO_ROOT / "data",
                         help="directory with instance CSV files (default: data)")
     parser.add_argument("--dpi", type=int, default=200, help="resolution for raster formats (default: 200)")
-    parser.add_argument("--method-prefix", default="",
-                        help="plot only methods whose name starts with this, e.g. LS_ (default: all)")
+    parser.add_argument("--method-pattern", default=".*",
+                        help="plot only methods matching this regex (default: all)")
     return parser.parse_args()
 
 
@@ -65,12 +67,12 @@ def read_instance(path):
     return xs, ys, costs
 
 
-def read_best(path, method_prefix=""):
+def read_best(path, method_pattern=""):
     """Return {instance: [(method, value, [nodes...]), ...]} keeping file order."""
     best = {}
     with open(path, newline="") as f:
         for row in csv.DictReader(f):
-            if not row["method"].startswith(method_prefix):
+            if not method_pattern.match(row["method"]):
                 continue
             nodes = [int(v) for v in row["solution"].split()]
             best.setdefault(row["instance"], []).append((row["method"], int(row["value"]), nodes))
@@ -107,7 +109,7 @@ def plot_solution(ax, xs, ys, costs, nodes, norm):
 
 def main():
     args = parse_args()
-    best = read_best(args.results, args.method_prefix)
+    best = read_best(args.results, re.compile(args.method_pattern))
     args.out_dir.mkdir(parents=True, exist_ok=True)
 
     legend_items = [
@@ -133,7 +135,7 @@ def main():
         for ax, (method, value, nodes) in zip(axes, solutions):
             ax.set_facecolor(SURFACE)
             plot_solution(ax, xs, ys, costs, nodes, norm)
-            ax.set_title(f"{method}\nobjective {value:,}".replace(",", " "),
+            ax.set_title(f"{method}\nobjective {value:,}".replace("_", "\n"),
                          fontsize=10, color=TEXT_PRIMARY)
         for ax in axes[len(solutions):]:
             ax.set_visible(False)

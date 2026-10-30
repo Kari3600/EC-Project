@@ -9,7 +9,7 @@ class NearestNeighborII : public Solver {
         const char* getName() const override {
             return "NearestNeighborII";
         }
-        std::vector<int> solve(const Problem& problem, int startNode) override;
+        std::vector<int> solve(const Problem& problem, int seed) override;
 };
 
 #endif

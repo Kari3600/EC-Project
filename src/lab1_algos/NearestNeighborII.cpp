@@ -2,12 +2,12 @@
 
 #include <vector>
 
-std::vector<int> NearestNeighborII::solve(const Problem& problem, int startNode) {
+std::vector<int> NearestNeighborII::solve(const Problem& problem, int seed) {
     const int size = problem.getSize();
     const int minLength = problem.minLength();
     std::vector<int> solution(minLength);
 
-    int currentNode = startNode;
+    int currentNode = seed % size;
     std::vector<bool> visited(size, false);
     solution[0] = currentNode;
     visited[currentNode] = true;

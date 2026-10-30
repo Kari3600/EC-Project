@@ -3,7 +3,8 @@
 #include <algorithm>
 #include <vector>
 
-std::vector<int> RandomSolver::solve(const Problem& problem, int /*startNode*/) {
+std::vector<int> RandomSolver::solve(const Problem& problem, int seed) {
+    std::srand(seed);
     const int size = problem.getSize();
     std::vector<int> solution(size);
 

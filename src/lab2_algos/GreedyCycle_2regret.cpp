@@ -3,12 +3,13 @@
 #include <vector>
 #include <climits>
 
-std::vector<int> GreedyCycle_2regret::solve(const Problem& problem, int startNode) {
+std::vector<int> GreedyCycle_2regret::solve(const Problem& problem, int seed) {
     const int size = problem.getSize();
     const int minLength = problem.minLength();
     std::vector<int> solution(minLength);
 
     std::vector<bool> visited(size, false);
+    int startNode = seed % size;
     solution[0] = startNode;
     visited[startNode] = true;
 
