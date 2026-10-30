@@ -42,6 +42,8 @@ for search in ["Greedy", "Steepest"]:
         ALGORITHMS.append(("LocalSearch", {"searchType": search, "intraMove": intra, "initialSolver": "RandomSolver"}, lambda size: range(1, RANDOM_RUNS + 1)))
         ALGORITHMS.append(("LocalSearch", {"searchType": search, "intraMove": intra, "initialSolver": "GreedyCycle_2regret", "alpha": 0.5}, lambda size: range(size)))
 
+ALGORITHMS.append(("LocalSearchWithCandidates", {"candidatesCount": 10}, lambda size: range(1, RANDOM_RUNS + 1)))
+
 def parse_args():
     parser = argparse.ArgumentParser(description="Run all algorithms on all instances via test_algo.")
     parser.add_argument("--name", default="lab3",

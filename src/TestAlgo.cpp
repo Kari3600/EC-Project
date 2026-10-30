@@ -16,6 +16,7 @@
 #include "./lab2_algos/NearestNeighborII_2regret.cpp"
 #include "./lab2_algos/GreedyCycle_2regret.cpp"
 #include "./lab3_algos/LocalSearch.cpp"
+#include "./lab4_algos/LocalSearchWithCandidates.cpp"
 
 #include <algorithm>
 #include <cctype>
@@ -154,6 +155,9 @@ Solver* createSolver(std::string solverName, ProgramArgs& args) {
         IntraMove intraMove = (args.get("intraMove") == "Nodes") ? IntraMove::Nodes : IntraMove::Edges;
         Solver* initialSolver = createSolver(args.get("initialSolver"), args); 
         return new LocalSearch(searchType, intraMove, initialSolver);
+    } else if (solverName == "LocalSearchWithCandidates") {
+        int candidatesCount = asInt(args.getOrDefault("candidatesCount", "10"));
+        return new LocalSearchWithCandidates(candidatesCount);
     } else {
         throw std::invalid_argument("Solver '" + solverName + "' does not exist.");
     }
