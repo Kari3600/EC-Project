@@ -15,15 +15,9 @@ header-includes:
 
 The student still has to attend 100 of the 200 classes in one day while
 getting as little tired as possible. This week they do not build the plan from
-scratch, but take a ready plan (a random one, or the one made with last week's
-weighted regret rule) and keep improving it with small changes: replacing one
+scratch, but take a ready random plan and keep improving it with small changes: replacing one
 attended class with one not attended, swapping the order of two classes, or
 walking a part of the route in reverse.
-
-- The **greedy** student makes the first change that helps.
-- The **steepest** student checks every possible change and makes the best one.
-
-Both stop when no single change makes the day less tiring.
 
 # Problem description (exactly the same as last week)
 
@@ -168,25 +162,26 @@ Method & \multicolumn{3}{c}{Instance A} & \multicolumn{3}{c}{Instance B} \\
 \cmidrule(lr){2-4} \cmidrule(l){5-7}
  & \multicolumn{3}{c}{av (min -- max)} & \multicolumn{3}{c}{av (min -- max)} \\
 \midrule
-Random solution                          & 260\,176 & 229\,522 & 286\,183 & 205\,847 & 186\,703 & 227\,217 \\
-Nearest neighbor I                       & 87\,477 & 84\,362 & 90\,075 & 59\,397 & 56\,007 & 63\,166 \\
-Nearest neighbor II                      & 74\,307 & 72\,328 & 77\,022 & 59\,476 & 52\,915 & 66\,164 \\
-Greedy cycle                             & 73\,739 & 72\,590 & 75\,281 & 59\,651 & 55\,655 & 63\,734 \\
+Random solution      & 262,653 & 238,917 & 286,724 & 206,842 & 181,610 & 226,734 \\
+NearestNeighborI        & 87,477 & 84,362 & 90,075 & 59,397 & 56,007 & 63,166 \\
+NearestNeighborII        & 74,307 & 72,328 & 77,022 & 59,476 & 52,915 & 66,164 \\
+GreedyCycle        & 73,739 & 72,590 & 75,281 & 59,651 & 55,655 & 63,734 \\
 \midrule[1pt]
-Nearest neighbor II 2-regret             & 122\,861 & 111\,527 & 133\,181 & 74\,763 & 69\,032 & 80\,767 \\
-Nearest neighbor II weighted 2-regret    & 75\,561 & 72\,419 & 78\,504 & 55\,698 & 50\,485 & 61\,406 \\
-Greedy cycle 2-regret                    & 120\,995 & 112\,654 & 130\,391 & 73\,459 & 69\,609 & 78\,175 \\
-Greedy cycle weighted 2-regret           & 73\,353 & 72\,011 & 75\,532 & 57\,863 & 52\,731 & 63\,370 \\
+Nearest neighbor II 2-regret        & 122,861 & 111,527 & 133,181 & 74,763 & 69,032 & 80,767 \\
+Nearest neighbor II weighted 2-regret        & 75,561 & 72,419 & 78,504 & 55,698 & 50,485 & 61,406 \\
+Greedy cycle 2-regret        & 120,995 & 112,654 & 130,391 & 73,459 & 69,609 & 78,175 \\
+Greedy cycle weighted 2-regret        & 73,353 & 72,011 & 75,532 & 57,863 & 52,731 & 63,370 \\
 \midrule[1pt]
-LS greedy, two-nodes, random start       & 88\,266 & 83\,363 & 94\,744 & 64\,560 & 58\,234 & 72\,315 \\
-LS greedy, two-nodes, greedy start       & 73\,025 & \textbf{71\,955} & 74\,877 & 54\,342 & 49\,978 & 61\,265 \\
-LS greedy, two-edges, random start       & 75\,646 & 73\,848 & 78\,573 & \textbf{52\,425} & 50\,636 & 54\,784 \\
-LS greedy, two-edges, greedy start       & \textbf{72\,961} & \textbf{71\,955} & 74\,607 & 53\,085 & 49\,378 & 60\,266 \\
-LS steepest, two-nodes, random start     & 90\,186 & 82\,230 & 98\,727 & 66\,372 & 59\,497 & 73\,726 \\
-LS steepest, two-nodes, greedy start     & 73\,022 & \textbf{71\,955} & 74\,861 & 54\,292 & 49\,978 & 61\,265 \\
-LS steepest, two-edges, random start     & 76\,208 & 73\,965 & 79\,586 & 52\,713 & 50\,189 & 55\,991 \\
-LS steepest, two-edges, greedy start     & 73\,004 & \textbf{71\,955} & 74\,861 & 53\,091 & \textbf{49\,346} & 60\,354 \\
-Local search with candidates             & 76\,234 & 73\,878 & 79\,182, & 52\,546 & 50\,422 & 55\,822 \\
+LS greedy, two-nodes, random start        & 88,669 & 82,989 & 96,524 & 64,576 & 57,464 & 71,404 \\
+LS greedy, two-nodes, greedy start        & 73,022& 71,955 & 74,861 & 57,528 & 52,702 & 62,933 \\
+LS greedy, two-edges, random start        & 75,557 & 73,618 & 77,679 & 52,452 & 50,399 & 55,468 \\
+LS greedy, two-edges, greedy start        & 72,966& 71,955 & 74,861 & 57,196 & 52,542 & 62,428 \\
+LS steepest, two-nodes, random start        & 89,321 & 79,649 & 96,354 & 65,871 & 59,357 & 74,662 \\
+LS steepest, two-nodes, greedy start        & 73,022 & 71,955 & 74,861 & 57,525 & 52,702 & 62,933 \\
+LS steepest, two-edges, random start        & 76,161 & 74,008 & 80,204 & 52,570 & 50,492 & 56,091 \\
+LS steepest, two-edges, greedy start        & 73,004 & 71,955 & 74,861 & 57,126 & 52,542 & 62,301 \\
+\midrule[1pt]
+LS with candidates        & 76,234 & 73,878 & 79,182 & 52,546 & 50,422 & 55,822\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -201,25 +196,26 @@ Method & \multicolumn{3}{c}{Instance A} & \multicolumn{3}{c}{Instance B} \\
 \cmidrule(lr){2-4} \cmidrule(l){5-7}
  & \multicolumn{3}{c}{av (min -- max)} & \multicolumn{3}{c}{av (min -- max)} \\
 \midrule
-Random solution                          & 0.007 & 0.004 & 0.013 & 0.008 & 0.004 & 0.120 \\
-Nearest neighbor I                       & 0.083 & 0.040 & 0.151 & 0.085 & 0.036 & 0.188 \\
-Nearest neighbor II                      & 2.741 & 1.219 & 4.871 & 2.155 & 1.213 & 3.605 \\
-Greedy cycle                             & 2.269 & 1.007 & 3.851 & 2.232 & 1.025 & 3.296 \\
+Random solution      & 0.004 & 0.003 & 0.009 & 0.003 & 0.003 & 0.009 \\
+NearestNeighborI        & 0.029 & 0.026 & 0.049 & 0.029 & 0.027 & 0.050 \\
+NearestNeighborII        & 1.130 & 1.083 & 1.923 & 1.157 & 1.082 & 2.056 \\
+GreedyCycle        & 0.778 & 0.755 & 1.221 & 0.792 & 0.755 & 1.357 \\
 \midrule[1pt]
-Nearest neighbor II 2-regret             & 2.755 & 1.159 & 5.387 & 2.588 & 1.233 & 3.570 \\
-Nearest neighbor II weighted 2-regret    & 2.679 & 1.276 & 4.303 & 2.597 & 1.214 & 4.163 \\
-Greedy cycle 2-regret                    & 3.764 & 1.753 & 5.050 & 3.449 & 1.548 & 5.617 \\
-Greedy cycle weighted 2-regret           & 3.248 & 1.555 & 5.017 & 3.124 & 1.482 & 4.684 \\
+Nearest neighbor II 2-regret        & 1.008 & 0.940 & 1.572 & 1.054 & 0.933 & 1.657 \\
+Nearest neighbor II weighted 2-regret        & 1.037 & 0.922 & 1.661 & 1.036 & 0.883 & 1.519 \\
+Greedy cycle 2-regret        & 1.365 & 1.286 & 1.902 & 1.379 & 1.288 & 1.831 \\
+Greedy cycle weighted 2-regret        & 1.338 & 1.262 & 1.950 & 1.311 & 1.219 & 1.815 \\
 \midrule[1pt]
-LS greedy, two-nodes, random start       & 7.699 & 2.699 & 14.928 & 5.413 & 1.906 & 9.762 \\
-LS greedy, two-nodes, greedy start       & 3.891 & 1.779 & 6.388 & 3.983 & 1.626 & 7.996 \\
-LS greedy, two-edges, random start       & 6.676 & 1.927 & 12.110 & 4.695 & 1.730 & 7.907 \\
-LS greedy, two-edges, greedy start       & 4.015 & 1.757 & 6.419 & 3.985 & 1.520 & 7.478 \\
-LS steepest, two-nodes, random start     & 13.551 & 8.833 & 26.024 & 13.532 & 8.883 & 26.182 \\
-LS steepest, two-nodes, greedy start     & 4.075 & 1.763 & 7.550 & 4.106 & 1.376 & 7.449 \\
-LS steepest, two-edges, random start     & 11.191 & 6.780 & 18.608 & 11.200 & 6.556 & 18.579 \\
-LS steepest, two-edges, greedy start     & 3.874 & 1.694 & 6.153 & 4.468 & 1.600 & 7.482 \\
-Local search with candidates             & 3.540 & 3.213 & 4.673 & 3.325 & 2.871 & 4.806 \\
+LS greedy, two-nodes, random start        & 3.589 & 1.732 & 5.992 &2.437 & 1.115 & 4.002 \\
+LS greedy, two-nodes, greedy start        & 1.600 & 1.382 & 3.926 & 1.642 & 1.404 & 2.435 \\
+LS greedy, two-edges, random start        & 2.964 & 1.431 & 4.742 &2.174 & 1.046 & 4.796 \\
+LS greedy, two-edges, greedy start        & 1.559 & 1.361 & 2.122 & 1.732 & 1.430 & 2.684 \\
+LS steepest, two-nodes, random start        & 10.672 & 8.225 & 17.996 & 11.100 & 8.556 & 20.230 \\
+LS steepest, two-nodes, greedy start        & 1.609 & 1.349 & 2.072 & 1.758 & 1.393 & 3.084 \\
+LS steepest, two-edges, random start        & 7.029 & 6.200 & 11.413 & 7.200 & 6.120 & 10.756 \\
+LS steepest, two-edges, greedy start        & 1.557 & 1.331 & 2.676 & 1.879 & 1.442 & 3.143 \\
+\midrule[1pt]
+LS with candidates        & 3.540 & 3.213 & 4.673 & 3.325 & 2.870 & 4.806 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -240,15 +236,16 @@ Method & \multicolumn{3}{c}{Instance A} & \multicolumn{3}{c}{Instance B} \\
 \cmidrule(lr){2-4} \cmidrule(l){5-7}
  & \multicolumn{3}{c}{av (min -- max)} & \multicolumn{3}{c}{av (min -- max)} \\
 \midrule
-LS greedy, two-nodes, random start       & 523.7 & 441 & 659 & 520.8 & 422 & 613 \\
-LS greedy, two-nodes, greedy start       & 4.2 & 0 & 12 & 17.0 & 0 & 41 \\
-LS greedy, two-edges, random start       & 507.1 & 436 & 567 & 515.9 & 451 & 594 \\
-LS greedy, two-edges, greedy start       & 5.1 & 0 & 21 & 28.4 & 3 & 63 \\
-LS steepest, two-nodes, random start     & 152.9 & 123 & 193 & 151.2 & 110 & 190 \\
-LS steepest, two-nodes, greedy start     & 3.3 & 0 & 9 & 10.5 & 0 & 23 \\
-LS steepest, two-edges, random start     & 132.3 & 116 & 150 & 133.3 & 114 & 151 \\
-LS steepest, two-edges, greedy start     & 3.3 & 0 & 10 & 14.3 & 3 & 30 \\
-Local search with candidates             & 132.7 & 116 & 154 & 132.5 & 115 & 150 \\
+LS greedy, two-nodes, random start        & 525.00 & 412 & 605 & 521.4 & 445 & 603 \\
+LS greedy, two-nodes, greedy start        & 4.3 & 0 & 17 & 5.8 & 1 & 32 \\
+LS greedy, two-edges, random start        & 510.2 & 449 & 578 & 510.5 & 459 & 596 \\
+LS greedy, two-edges, greedy start        & 5.2 & 0 & 19 & 10.2 & 2 & 39 \\
+LS steepest, two-nodes, random start        & 154.1 & 123 & 201 & 151.4 & 123 & 200 \\
+LS steepest, two-nodes, greedy start        & 3.3 & 0 & 9 & 5.3 & 1 & 21 \\
+LS steepest, two-edges, random start        & 133.2 & 119 & 150 & 134.0 & 119 & 152 \\
+LS steepest, two-edges, greedy start        & 3.3 & 0 & 10 & 9.2 & 2 & 24 \\
+\midrule[1pt]
+LS with candidates        & 132.7 & 116 & 154 & 132.5 & 115 & 150 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -257,39 +254,6 @@ Local search with candidates             & 132.7 & 116 & 154 & 132.5 & 115 & 150
 "LS greedy" and "LS steepest" are the two types of local search, "two-nodes"
 and "two-edges" the intra-route move, and "random" and "greedy" the starting
 solution.
-
-# Starting solutions of the best solutions
-
-For every local search method, the table shows the best final solution, the
-starting solution it was obtained from (the seed of the random solution, or the
-starting node of the construction heuristic) and the objective value of that
-starting solution.
-
-\begin{center}
-\small
-\begin{tabular}{lrrrrrr}
-\toprule
- & \multicolumn{3}{c}{Instance A} & \multicolumn{3}{c}{Instance B} \\
-\cmidrule(lr){2-4} \cmidrule(lr){5-7}
-Method & Final & Start & Initial & Final & Start & Initial \\
-\midrule
-LS greedy, two-nodes, random start       & 83\,363 & seed 117 & 251\,863 & 58\,234 & seed 190 & 217\,259 \\
-LS greedy, two-nodes, greedy start       & 71\,955 & node 6 & 72\,575 & 49\,978 & node 90 & 50\,580 \\
-LS greedy, two-edges, random start       & 73\,848 & seed 97 & 267\,117 & 50\,636 & seed 151 & 225\,299 \\
-LS greedy, two-edges, greedy start       & 71\,955 & node 6 & 72\,575 & 49\,378 & node 105 & 54\,430 \\
-LS steepest, two-nodes, random start     & 82\,230 & seed 97 & 267\,117 & 59\,497 & seed 61 & 206\,038 \\
-LS steepest, two-nodes, greedy start     & 71\,955 & node 6 & 72\,575 & 49\,978 & node 90 & 50\,580 \\
-LS steepest, two-edges, random start     & 73\,965 & seed 135 & 264\,114 & 50\,189 & seed 43 & 220\,627 \\
-LS steepest, two-edges, greedy start     & 71\,955 & node 6 & 72\,575 & 49\,346 & node 193 & 54\,106 \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-The best final solutions do not come from the best starting solutions. On
-instance A the best construction (72 011, e.g. from node 31) is improved only
-to 71 996, while the start from node 6 (72 575) leads to 71 955. On instance B
-the best construction (50 485, node 192) is improved to 50 031, while the best
-result, 49 346, comes from a starting solution of 54 106 (node 193).
 
 # Visualization of the best solutions
 
@@ -334,6 +298,30 @@ reports.
 ```
 149 116 147 42 121 198 96 48 89 83 57 190 70 81 94 105 196 114 10 90 129 153 14 2 74 20 182 80 127 54 192 162 104 185 76 66 67 24 34 152 181 179 87 82 51 85 59 73 167 151 122 173 184 3 86 46 72 120 133 136 8 117 160 69 172 189 21 183 30 130 191 38 47 140 154 97 71 40 60 157 45 134 175 62 91 36 197 29 132 103 6 180 115 170 177 125 26 158 145 28
 ```
+
+# Effect of candidates count on local search
+
+The candidate count controls the size of the neighborhood considered by the
+local search. Increasing it from 3 to 10 substantially improves the average
+objective value on both instances: from 78,779 to 76,234 on A (about 3.2%) and
+from 53,728 to 52,546 on B (about 2.2%). Further increases bring only small
+gains. On A, the best average in this experiment is 76,152 at a count of 50,
+only about 0.1% below the result at 10. On B, the best average is 52,529 at a
+count of 8; counts from 8 to 50 remain close, between 52,529 and 52,628.
+
+Runtime, in contrast, rises steadily with the candidate count. From 3 to 50 it
+increases from 2.22 ms to 14.32 ms on A and from 2.00 ms to 12.17 ms on B.
+The average number of improving steps changes much less: it falls from about
+143 to 133 on A and stays around 133–134 on B. Thus, the extra runtime mainly
+comes from evaluating a larger neighborhood, not from taking substantially
+more search steps.
+
+Overall, a count around 8–10 offers a good quality/runtime trade-off for these
+instances: most of the objective improvement is already achieved, while
+runtime remains far below that at counts of 30 or 50. The best setting may
+depend on whether a small additional quality gain is worth the extra runtime.
+
+![Effect of candidatesCount on average score, time, and steps](figures/lab4_candidates_count.png)
 
 # Solution checker
 
