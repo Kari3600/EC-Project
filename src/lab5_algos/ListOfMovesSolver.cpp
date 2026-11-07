@@ -78,6 +78,10 @@ void ListOfMovesSolver::generateInterMoves(
         if (delta < 0) {
             listOfMoves.insert({true, *node1, *node2, *node3, *node4, delta});
         } 
+        delta = interDelta(problem, *node1, *node2, *node4, *node3);
+        if (delta < 0) {
+            listOfMoves.insert({true, *node1, *node2, *node4, *node3, delta});
+        }
     }
 }
 
@@ -86,6 +90,7 @@ std::vector<int> ListOfMovesSolver::solve(const Problem& problem, int seed) {
     // we need to remember to count later how much time did it take compared to the whole algorithm
     std::vector<int> solution = initialSolver->solve(problem, seed);
     initialSolution = solution;
+    steps = 0;
 
     std::vector<bool> selected(problem.getSize(), false);
     for (int node : solution) {
@@ -153,7 +158,9 @@ std::vector<int> ListOfMovesSolver::solve(const Problem& problem, int seed) {
             //     }
             //     ++it;
             // }
+            generateIntraMoves(problem, solution, selected, listOfMoves, prev);
             generateIntraMoves(problem, solution, selected, listOfMoves, pos);
+            generateIntraMoves(problem, solution, selected, listOfMoves, next);
             generateInterMoves(problem, solution, listOfMoves, prev, pos);
             generateInterMoves(problem, solution, listOfMoves, pos, next);
         } else {
@@ -190,6 +197,10 @@ std::vector<int> ListOfMovesSolver::solve(const Problem& problem, int seed) {
             }
             if (flag) {
                 // this move would break cycle into two separate cycles, so we cannot apply it
+                const int delta = interDelta(problem, *pos1, *pos2, *pos3, *pos4);
+                if (delta < 0) {
+                    listOfMoves.insert({true, *pos1, *pos2, *pos3, *pos4, delta});
+                }
                 continue;
             }
             if (pos2 > pos4) {
@@ -221,8 +232,8 @@ std::vector<int> ListOfMovesSolver::solve(const Problem& problem, int seed) {
             generateIntraMoves(problem, solution, selected, listOfMoves, pos2);
             generateIntraMoves(problem, solution, selected, listOfMoves, pos3);
             generateIntraMoves(problem, solution, selected, listOfMoves, pos4);
-            generateInterMoves(problem, solution, listOfMoves, pos1, pos3);
-            generateInterMoves(problem, solution, listOfMoves, pos2, pos4);
+            generateInterMoves(problem, solution, listOfMoves, pos1, pos2);
+            generateInterMoves(problem, solution, listOfMoves, pos3, pos4);
         }
         ++steps;
     }
