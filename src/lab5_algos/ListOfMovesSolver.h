@@ -58,7 +58,8 @@ class ListOfMovesSolver : public Solver {
         std::vector<int>::iterator safeNext(std::vector<int>& vector, std::vector<int>::iterator it) const;
         std::vector<int>::iterator safePrev(std::vector<int>& vector, std::vector<int>::iterator it) const;
 
-        void generateIntraMoves(const Problem& problem, std::vector<int>& solution, std::vector<bool>& selected, std::set<Data,Compare>& listOfMoves, std::vector<int>::iterator pos);
+        void generateIntraMovesLeaving(const Problem& problem, std::vector<int>& solution, std::vector<bool>& selected, std::set<Data,Compare>& listOfMoves, std::vector<int>::iterator pos);
+        void generateIntraMovesEntering(const Problem& problem, std::vector<int>& solution, std::vector<bool>& selected, std::set<Data,Compare>& listOfMoves, int entering);
         void generateInterMoves(const Problem& problem, std::vector<int>& solution, std::set<Data,Compare>& listOfMoves, std::vector<int>::iterator node1, std::vector<int>::iterator node2, bool ignorePrevious = false);
 
         // moves: modify the solution in place

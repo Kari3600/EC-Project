@@ -36,7 +36,7 @@ std::vector<int>::iterator ListOfMovesSolver::safePrev(std::vector<int>& vector,
     return std::prev(it);
 }
 
-void ListOfMovesSolver::generateIntraMoves(
+void ListOfMovesSolver::generateIntraMovesLeaving(
     const Problem& problem,
     std::vector<int>& solution,
     std::vector<bool>& selected,
@@ -58,6 +58,24 @@ void ListOfMovesSolver::generateIntraMoves(
     }
 }
 
+void ListOfMovesSolver::generateIntraMovesEntering(
+    const Problem& problem,
+    std::vector<int>& solution,
+    std::vector<bool>& selected,
+    std::set<Data,Compare>& listOfMoves,
+    int entering
+) {
+    auto it1 = solution.begin();
+    auto it2 = safeNext(solution, it1);
+    auto it3 = safeNext(solution, it2);
+    for (; it1 != solution.end(); ++it1, ++it2, ++it3) {
+        int delta = intraDelta(problem, entering, *it2, *it1, *it3);
+        if (delta < 0) {
+            listOfMoves.insert({false, entering, *it2, *it1, *it3, delta});
+        }
+    }
+}
+
 void ListOfMovesSolver::generateInterMoves(
     const Problem& problem,
     std::vector<int>& solution,
@@ -67,11 +85,11 @@ void ListOfMovesSolver::generateInterMoves(
     bool ignorePrevious
 ) {
     for (auto node3 = ignorePrevious ? safeNext(solution, node2) : solution.begin(); node3 != solution.end(); ++node3) {
-        if (!ignorePrevious && (node3 == node1 || node3 == node2)) {
+        if (node3 == node1 || node3 == node2) {
             continue;
         }
         auto node4 = safeNext(solution, node3);
-        if (!ignorePrevious && (node4 == node1 || node4 == node2)) {
+        if (node4 == node1 || node4 == node2) {
             continue;
         }
         int delta = interDelta(problem, *node1, *node2, *node3, *node4);
@@ -101,7 +119,7 @@ std::vector<int> ListOfMovesSolver::solve(const Problem& problem, int seed) {
 
     for (int i = 0; i < solution.size(); ++i) {
         auto pos = std::next(solution.begin(), i);
-        generateIntraMoves(problem, solution, selected, listOfMoves, pos);
+        generateIntraMovesLeaving(problem, solution, selected, listOfMoves, pos);
     }
 
     for (int i = 0; i < solution.size(); ++i) {
@@ -111,14 +129,6 @@ std::vector<int> ListOfMovesSolver::solve(const Problem& problem, int seed) {
     }
 
     while (!listOfMoves.empty()) {
-        // std::cout << "Candidates: " << listOfMoves.size() << std::endl;
-
-        // std::cout << "Current soltuion: ";
-        // for (auto val : solution) {
-        //     std::cout << val << " ";
-        // }
-        // std::cout << std::endl;
-
         const Data bestMove = *listOfMoves.begin();
         listOfMoves.erase(listOfMoves.begin());
         if (!bestMove.inter) {
@@ -158,9 +168,10 @@ std::vector<int> ListOfMovesSolver::solve(const Problem& problem, int seed) {
             //     }
             //     ++it;
             // }
-            generateIntraMoves(problem, solution, selected, listOfMoves, prev);
-            generateIntraMoves(problem, solution, selected, listOfMoves, pos);
-            generateIntraMoves(problem, solution, selected, listOfMoves, next);
+            generateIntraMovesLeaving(problem, solution, selected, listOfMoves, prev);
+            generateIntraMovesLeaving(problem, solution, selected, listOfMoves, pos);
+            generateIntraMovesLeaving(problem, solution, selected, listOfMoves, next);
+            generateIntraMovesEntering(problem, solution, selected, listOfMoves, x2);
             generateInterMoves(problem, solution, listOfMoves, prev, pos);
             generateInterMoves(problem, solution, listOfMoves, pos, next);
         } else {
@@ -228,13 +239,20 @@ std::vector<int> ListOfMovesSolver::solve(const Problem& problem, int seed) {
             //     }
             //     ++it;
             // }
-            generateIntraMoves(problem, solution, selected, listOfMoves, pos1);
-            generateIntraMoves(problem, solution, selected, listOfMoves, pos2);
-            generateIntraMoves(problem, solution, selected, listOfMoves, pos3);
-            generateIntraMoves(problem, solution, selected, listOfMoves, pos4);
+            generateIntraMovesLeaving(problem, solution, selected, listOfMoves, pos1);
+            generateIntraMovesLeaving(problem, solution, selected, listOfMoves, pos2);
+            generateIntraMovesLeaving(problem, solution, selected, listOfMoves, pos3);
+            generateIntraMovesLeaving(problem, solution, selected, listOfMoves, pos4);
             generateInterMoves(problem, solution, listOfMoves, pos1, pos2);
             generateInterMoves(problem, solution, listOfMoves, pos3, pos4);
         }
+
+        // std::cout << "Current soltuion: ";
+        // for (auto val : solution) {
+        //     std::cout << val << " ";
+        // }
+        // std::cout << std::endl;
+
         ++steps;
     }
 
