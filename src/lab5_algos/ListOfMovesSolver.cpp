@@ -65,10 +65,9 @@ void ListOfMovesSolver::generateIntraMovesEntering(
     std::set<Data,Compare>& listOfMoves,
     int entering
 ) {
-    auto it1 = solution.begin();
-    auto it2 = safeNext(solution, it1);
-    auto it3 = safeNext(solution, it2);
-    for (; it1 != solution.end(); ++it1, ++it2, ++it3) {
+    for (auto it1 = solution.begin(); it1 != solution.end(); ++it1) {
+        auto it2 = safeNext(solution, it1);
+        auto it3 = safeNext(solution, it2);
         int delta = intraDelta(problem, entering, *it2, *it1, *it3);
         if (delta < 0) {
             listOfMoves.insert({false, entering, *it2, *it1, *it3, delta});
@@ -128,18 +127,21 @@ std::vector<int> ListOfMovesSolver::solve(const Problem& problem, int seed) {
         generateInterMoves(problem, solution, listOfMoves, node1, node2, true);
     }
 
-    while (!listOfMoves.empty()) {
-        const Data bestMove = *listOfMoves.begin();
-        listOfMoves.erase(listOfMoves.begin());
+    // browse the list from the best move until an applicable one is found
+    auto it = listOfMoves.begin();
+    while (it != listOfMoves.end()) {
+        const Data bestMove = *it;
         if (!bestMove.inter) {
             const int x1 = bestMove.x1;
             const int x2 = bestMove.x2;
             if (!selected[x2]) {
                 // x2 is no longer in the solution, so the move is no longer valid
+                it = listOfMoves.erase(it);
                 continue;
             }
             if (selected[x1]) {
                 // x1 is already in the solution, so the move is no longer valid
+                it = listOfMoves.erase(it);
                 continue;
             }
             auto pos = std::find(solution.begin(), solution.end(), x2);
@@ -148,9 +150,11 @@ std::vector<int> ListOfMovesSolver::solve(const Problem& problem, int seed) {
 
             if (!(*prev == bestMove.x3 && *next == bestMove.x4 || *prev == bestMove.x4 && *next == bestMove.x3)) {
                 // either x3 or x4 is no longer in the solution, so the move is no longer valid
+                it = listOfMoves.erase(it);
                 continue;
             }
 
+            listOfMoves.erase(it);
             selected[x2] = false;
             selected[x1] = true;
             *pos = x1;
@@ -184,6 +188,7 @@ std::vector<int> ListOfMovesSolver::solve(const Problem& problem, int seed) {
             auto pos3 = std::find(solution.begin(), solution.end(), x3);
             if (pos1 == solution.end() || pos3 == solution.end()) {
                 // either x1 or x3 is no longer in the solution, so the move is no longer valid
+                it = listOfMoves.erase(it);
                 continue;
             }
             auto pos2 = safeNext(solution, pos1);
@@ -192,6 +197,7 @@ std::vector<int> ListOfMovesSolver::solve(const Problem& problem, int seed) {
                 flag = !flag;
                 if (*pos2 != x2) {
                     // either x2 is no longer in the solution or is not next to x1, so the move is no longer valid
+                    it = listOfMoves.erase(it);
                     continue;
                 }
                 std::swap(pos1, pos2);
@@ -202,18 +208,18 @@ std::vector<int> ListOfMovesSolver::solve(const Problem& problem, int seed) {
                 flag = !flag;
                 if (*pos4 != x4) {
                     // either x4 is no longer in the solution or is not next to x3, so the move is no longer valid
+                    it = listOfMoves.erase(it);
                     continue;
                 }
                 std::swap(pos3, pos4);
             }
             if (flag) {
-                // this move would break cycle into two separate cycles, so we cannot apply it
-                const int delta = interDelta(problem, *pos1, *pos2, *pos3, *pos4);
-                if (delta < 0) {
-                    listOfMoves.insert({true, *pos1, *pos2, *pos3, *pos4, delta});
-                }
+                // edges in different relative direction: not applicable now, but it may become
+                // applicable after another reversal, so keep it in the list and browse further
+                ++it;
                 continue;
             }
+            listOfMoves.erase(it);
             if (pos2 > pos4) {
                 std::swap(pos1, pos3);
                 std::swap(pos2, pos4);
@@ -254,6 +260,7 @@ std::vector<int> ListOfMovesSolver::solve(const Problem& problem, int seed) {
         // std::cout << std::endl;
 
         ++steps;
+        it = listOfMoves.begin();
     }
 
     return solution;
