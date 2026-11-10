@@ -115,7 +115,8 @@ We also tested three other perturbations, each with strength $k$:
 
 Their exact description and pseudocode are in a
 [separate document](https://github.com/Kari3600/EC-Project/blob/main/reports/lab6_perturbations.pdf).
-The choice of the perturbation and of $k$ is explained in the next section.
+Their results are included in the tables in the next section, where the
+choice of the perturbation and of $k$ is also explained.
 
 # Computational experiment
 
@@ -125,8 +126,11 @@ in a first run of the experiment. The results of the earlier methods are taken
 from `results/lab5_summary.csv`, the results of MSLS and ILS from
 `results/lab6_summary.csv`. The tables include the best construction heuristic
 and the best local search for each instance, and the local search with the list
-of moves that MSLS and ILS are built on. Lower objective values are better; the
-tables show the average and the minimum--maximum range over the runs.
+of moves that MSLS and ILS are built on. ILS is shown with each of the four
+perturbations, with the value of $k$ that gives the best average over both
+instances; the perturbation used in the main ILS is the first one. Lower
+objective values are better; the tables show the average and the
+minimum--maximum range over the runs.
 
 \begin{table}[H]
 \centering
@@ -146,7 +150,10 @@ LS greedy, two-edges, random start       & 75\,508 & 73\,219 & 78\,672 & 52\,356
 LS with list of moves, random start      & 76\,237 & 73\,629 & 81\,989 & 52\,603 & 50\,280 & 55\,256 \\
 \midrule[1pt]
 MSLS (400 LS runs)                       & 73\,650 & 73\,172 & 74\,151 & 50\,163 & 49\,550 & 50\,559 \\
-ILS (random moves, $k=16$)               & \textbf{71\,632} & 71\,484 & 72\,152 & \textbf{48\,226} & 48\,150 & 48\,431 \\
+ILS, random moves, $k=16$                & \textbf{71\,632} & 71\,484 & 72\,152 & \textbf{48\,226} & 48\,150 & 48\,431 \\
+ILS, segment replacement, $k=8$          & 71\,641 & 71\,503 & 71\,978 & 48\,289 & 48\,154 & 48\,712 \\
+ILS, double-bridge, $k=1$                & 71\,632 & 71\,484 & 71\,764 & 48\,302 & 48\,150 & 48\,717 \\
+ILS, guided replacement, $k=24$          & 71\,744 & 71\,484 & 72\,470 & 48\,460 & 48\,152 & 49\,034 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -169,7 +176,10 @@ LS greedy, two-edges, random start       & 7.055 & 3.475 & 10.774 & 4.496 & 2.36
 LS with list of moves, random start      & 8.117 & 6.316 & 17.589 & 7.558 & 6.021 & 9.417 \\
 \midrule[1pt]
 MSLS (400 LS runs)                       & 1469.2 & 1450.6 & 1536.2 & 1434.3 & 1412.4 & 1469.8 \\
-ILS (random moves, $k=16$)               & 1466.3 & 1466.0 & 1466.5 & 1423.2 & 1423.0 & 1423.4 \\
+ILS, random moves, $k=16$                & 1466.3 & 1466.0 & 1466.5 & 1423.2 & 1423.0 & 1423.4 \\
+ILS, segment replacement, $k=8$          & 1466.1 & 1466.0 & 1466.3 & 1423.1 & 1423.0 & 1423.2 \\
+ILS, double-bridge, $k=1$                & 1466.1 & 1466.0 & 1466.1 & 1423.0 & 1423.0 & 1423.1 \\
+ILS, guided replacement, $k=24$          & 1466.2 & 1466.0 & 1466.3 & 1423.1 & 1423.0 & 1423.2 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -185,7 +195,10 @@ Method & \multicolumn{3}{c}{Instance A} & \multicolumn{3}{c}{Instance B} \\
  & \multicolumn{3}{c}{av (min -- max)} & \multicolumn{3}{c}{av (min -- max)} \\
 \midrule
 MSLS (400 LS runs)                       & 400 & 400 & 400 & 400 & 400 & 400 \\
-ILS (random moves, $k=16$)               & 3\,388 & 3\,342 & 3\,457 & 3\,352 & 3\,250 & 3\,417 \\
+ILS, random moves, $k=16$                & 3\,388 & 3\,342 & 3\,457 & 3\,352 & 3\,250 & 3\,417 \\
+ILS, segment replacement, $k=8$          & 5\,398 & 5\,317 & 5\,507 & 5\,430 & 5\,328 & 5\,563 \\
+ILS, double-bridge, $k=1$                & 17\,593 & 17\,365 & 17\,929 & 17\,442 & 17\,153 & 17\,899 \\
+ILS, guided replacement, $k=24$          & 5\,037 & 4\,937 & 5\,148 & 5\,760 & 5\,513 & 5\,897 \\
 \bottomrule
 \end{tabular}
 \end{table}
