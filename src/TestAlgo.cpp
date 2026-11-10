@@ -17,6 +17,7 @@
 #include "./lab2_algos/GreedyCycle_2regret.cpp"
 #include "./lab3_algos/LocalSearch.cpp"
 #include "./lab4_algos/LocalSearchWithCandidates.cpp"
+#include "./lab5_algos/ListOfMovesSolver.cpp"
 
 #include <algorithm>
 #include <cctype>
@@ -158,6 +159,9 @@ Solver* createSolver(std::string solverName, ProgramArgs& args) {
     } else if (solverName == "LocalSearchWithCandidates") {
         int candidatesCount = asInt(args.getOrDefault("candidatesCount", "10"));
         return new LocalSearchWithCandidates(candidatesCount);
+    } else if (solverName == "ListOfMovesSolver") {
+        Solver* initialSolver = createSolver(args.get("initialSolver"), args); 
+        return new ListOfMovesSolver(initialSolver);
     } else {
         throw std::invalid_argument("Solver '" + solverName + "' does not exist.");
     }
