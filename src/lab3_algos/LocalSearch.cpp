@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <stdexcept>
+#include <utility>
 
 #include "../lab1_algos/RandomSolver.h"
 
@@ -213,7 +214,11 @@ std::vector<int> LocalSearch::solve(const Problem& problem, int seed) {
     // we need to remember to count later how much time did it take compared to the whole algorithm
     std::vector<int> solution = getInitialSolution(problem, seed);
     initialSolution = solution;
+    return improve(problem, std::move(solution));
+}
 
+// runs the local search from the given solution until a local optimum is reached
+std::vector<int> LocalSearch::improve(const Problem& problem, std::vector<int> solution) {
     std::vector<bool> selected(problem.getSize(), false);
     for (int node : solution) {
         selected[node] = true;

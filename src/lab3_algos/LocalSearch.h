@@ -24,6 +24,8 @@ class LocalSearch : public Solver {
             return name.c_str();
         }
         std::vector<int> solve(const Problem& problem, int seed) override;
+        // local search from the given solution (used by ILS); updates getSteps()
+        std::vector<int> improve(const Problem& problem, std::vector<int> solution);
         std::map<std::string, std::any> getLastRunStatistics() const override {
             return {{"Steps", steps}};
         }

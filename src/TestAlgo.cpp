@@ -18,6 +18,8 @@
 #include "./lab3_algos/LocalSearch.cpp"
 #include "./lab4_algos/LocalSearchWithCandidates.cpp"
 #include "./lab5_algos/ListOfMovesSolver.cpp"
+#include "./lab6_algos/MSLS.cpp"
+#include "./lab6_algos/ILS.cpp"
 
 #include <algorithm>
 #include <cctype>
@@ -35,6 +37,10 @@
 static void printAny(std::any any) {
     if (int* val = std::any_cast<int>(&any)) {
         std::cout << *val;
+    } else if (auto* values = std::any_cast<std::vector<int>>(&any)) {
+        for (std::size_t i = 0; i < values->size(); ++i) {
+            std::cout << (i ? " " : "") << (*values)[i];
+        }
     } else {
         throw "Unsupported printing type: "+std::string(any.type().name());
     }
@@ -162,6 +168,17 @@ Solver* createSolver(std::string solverName, ProgramArgs& args) {
     } else if (solverName == "ListOfMovesSolver") {
         Solver* initialSolver = createSolver(args.get("initialSolver"), args); 
         return new ListOfMovesSolver(initialSolver);
+    } else if (solverName == "MSLS") {
+        int iterations = asInt(args.getOrDefault("iterations", "400"));
+        Solver* localSearch = createSolver(args.get("localSearch"), args);
+        return new MSLS(localSearch, iterations);
+    } else if (solverName == "ILS") {
+        // local search: ListOfMovesSolver, the starting solution is random
+        ListOfMovesSolver* localSearch = new ListOfMovesSolver(new RandomSolver());
+        Perturbation perturbation = ILS::parsePerturbation(args.get("perturbation"));
+        int strength = asInt(args.get("strength"));
+        double timeMs = asFloat(args.get("timeMs"));
+        return new ILS(localSearch, perturbation, strength, timeMs);
     } else {
         throw std::invalid_argument("Solver '" + solverName + "' does not exist.");
     }
