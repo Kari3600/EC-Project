@@ -42,8 +42,8 @@ def parse_args():
     parser.add_argument("--name", default="lab1_plot",
                         help="file name prefix; the instance name is appended (default: lab1_plot)")
     parser.add_argument("--format", default="png", help="image format, e.g. png, pdf, svg (default: png)")
-    parser.add_argument("--results", type=Path, default=REPO_ROOT / "results" / "lab1_best.csv",
-                        help="best solutions CSV written by run_experiment.py (default: results/lab1_best.csv)")
+    parser.add_argument("--results", type=Path, nargs="+", default=[REPO_ROOT / "results" / "lab1_best.csv"],
+                        help="best solutions CSV(s) written by run_experiment.py (default: results/lab1_best.csv)")
     parser.add_argument("--data-dir", type=Path, default=REPO_ROOT / "data",
                         help="directory with instance CSV files (default: data)")
     parser.add_argument("--dpi", type=int, default=200, help="resolution for raster formats (default: 200)")
@@ -109,7 +109,10 @@ def plot_solution(ax, xs, ys, costs, nodes, norm):
 
 def main():
     args = parse_args()
-    best = read_best(args.results, re.compile(args.method_pattern))
+    best = {}
+    for results in args.results:
+        for instance, solutions in read_best(results, re.compile(args.method_pattern)).items():
+            best.setdefault(instance, []).extend(solutions)
     args.out_dir.mkdir(parents=True, exist_ok=True)
 
     legend_items = [

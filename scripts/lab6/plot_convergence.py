@@ -34,6 +34,13 @@ TITLES = {
     "doubleBridge": "k double-bridges",
     "guided": "k costly nodes replaced by near ones",
 }
+# strengths shown in each subplot (the experiment may contain more)
+PLOT_STRENGTHS = {
+    "randomMoves": [4, 8, 16, 24],
+    "segment": [2, 4, 8, 16],
+    "doubleBridge": [1, 2, 3, 4],
+    "guided": [4, 8, 16, 24],
+}
 # colorblind-safe, one color per k (in increasing order of k)
 K_COLORS = ["#e69f00", "#0072b2", "#009e73", "#cc79a7"]
 SURFACE = "#fcfcfb"
@@ -73,7 +80,7 @@ def main():
     traces = {}   # instance -> perturbation -> [(k, seed, trace)]
     for row in read_csv(args.trace):
         match = METHOD_PATTERN.fullmatch(row["method"])
-        if match:
+        if match and int(match.group(2)) in PLOT_STRENGTHS[match.group(1)]:
             trace = [int(v) for v in row["trace"].split()]
             traces.setdefault(row["instance"], {}).setdefault(match.group(1), []).append(
                 (int(match.group(2)), int(row["seed"]), trace))
