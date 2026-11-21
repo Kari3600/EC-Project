@@ -210,6 +210,18 @@ struct ProgramArgs {
     }
 };
 
+Destroyer* createDestroyer(ProgramArgs& args) {
+    std::string destroyerName = args.get(0);
+    if (destroyerName == "random") {
+        return new RandomDestroyer();
+    } else if (destroyerName == "randomChain") {
+        int chainCount = asInt(args.get("chainCount"));
+        return new RandomChainDestroyer(chainCount);
+    } else {
+        throw std::invalid_argument("Destroyer '" + destroyerName + "' does not exist.");
+    }
+}
+
 Solver* createSolver(ProgramArgs& args) {
     std::string solverName = args.get(0);
     if (solverName == "RandomSolver") {
@@ -247,6 +259,19 @@ Solver* createSolver(ProgramArgs& args) {
         int strength = asInt(args.get("strength"));
         double timeMs = asFloat(args.get("timeMs"));
         return new ILS(localSearch, perturbation, strength, timeMs);
+    } else if (solverName == "LNS") {
+        ProgramArgs destroyerArgs(args.get("destroyer"));
+        Destroyer* destroyer = createDestroyer(destroyerArgs);
+        ProgramArgs repairerArgs(args.get("repairer"));
+        Solver* repairer = createSolver(repairerArgs);
+        Solver* postprocessor = nullptr;
+        if (args.contains("postprocessor")) {
+            ProgramArgs postprocessorArgs = ProgramArgs(args.get("postprocessor"));
+            postprocessor = createSolver(postprocessorArgs);
+        }
+        double discardPercent = asFloat(args.get("discardPercent"));
+        double timeMs = asFloat(args.get("timeMs"));
+        return new LNS(destroyer, repairer, postprocessor, discardPercent, timeMs);
     } else {
         throw std::invalid_argument("Solver '" + solverName + "' does not exist.");
     }

@@ -57,5 +57,8 @@ def main():
 
         # Generate time table
         generate_statistics_table("Running time [ms]", data, lambda d: d["time"]/1000, vf = lambda v: f"{v:.3f}")
+
+        generate_statistics_table("Steps", data, lambda d: len(d["trace"]) if "trace" in d else None, vf = lambda v: f"{v:,}".replace(",","\\,"))
+
 if __name__ == "__main__":
     main()
