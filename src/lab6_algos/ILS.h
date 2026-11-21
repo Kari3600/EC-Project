@@ -16,39 +16,37 @@ enum class Perturbation { RandomMoves, Segment, DoubleBridge, Guided };
 // the random starting solution).
 class ILS : public Solver {
     public:
-        ILS(ListOfMovesSolver* localSearch, Perturbation perturbation, int strength, double timeMs)
+        ILS(Solver* localSearch, Perturbation perturbation, int strength, double timeMs)
             : localSearch(localSearch), perturbation(perturbation), strength(strength), timeMs(timeMs) {
             name = std::string("ILS_") + perturbationName(perturbation) + "_k=" + std::to_string(strength);
         }
         const char* getName() const override {
             return name.c_str();
         }
-        std::vector<int> solve(const Problem& problem, int seed) override;
+        void solve(const Problem& problem, std::vector<int>& solution, std::mt19937& rng) override;
         std::map<std::string, std::any> getLastRunStatistics() const override {
-            return {{"LS runs", static_cast<int>(trace.size())},
-                    {"Same optimum", sameOptimum},
-                    {"Trace", trace}};
+            return {{"iterations", static_cast<int>(trace.size())},
+                    {"same_optimum", sameOptimum},
+                    {"trace", trace}};
         }
 
         static Perturbation parsePerturbation(const std::string& text);
         static const char* perturbationName(Perturbation perturbation);
 
     private:
-        void perturb(const Problem& problem, std::vector<int>& solution, std::vector<bool>& selected);
-        void randomMoves(std::vector<int>& solution, std::vector<bool>& selected);
-        void segment(std::vector<int>& solution, std::vector<bool>& selected);
-        void doubleBridge(std::vector<int>& solution);
-        void guided(const Problem& problem, std::vector<int>& solution, std::vector<bool>& selected);
+        void perturb(const Problem& problem, std::vector<int>& solution, std::vector<bool>& selected, std::mt19937& rng);
+        void randomMoves(std::vector<int>& solution, std::vector<bool>& selected, std::mt19937& rng);
+        void segment(std::vector<int>& solution, std::vector<bool>& selected, std::mt19937& rng);
+        void doubleBridge(std::vector<int>& solution, std::mt19937& rng);
+        void guided(const Problem& problem, std::vector<int>& solution, std::vector<bool>& selected, std::mt19937& rng);
 
-        int randomInt(int from, int to);   // uniform in [from, to]
-        int randomUnselected(const std::vector<bool>& selected);
+        int randomUnselected(const std::vector<bool>& selected, std::mt19937& rng);
 
-        ListOfMovesSolver* localSearch;
+        Solver* localSearch;
         Perturbation perturbation;
         int strength;
         double timeMs;
         std::string name;
-        std::mt19937 rng;
 
         // guided perturbation: for every node, the other nodes sorted by distance + cost
         std::vector<std::vector<int>> nearest;

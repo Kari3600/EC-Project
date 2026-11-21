@@ -3,18 +3,13 @@
 #include <climits>
 #include <utility>
 
-std::vector<int> MSLS::solve(const Problem& problem, int seed) {
-    std::vector<int> best;
+void MSLS::solve(const Problem& problem, std::vector<int>& best, std::mt19937& rng) {
+    std::vector<int> initialSolution = best;
     int bestCost = INT_MAX;
 
     for (int i = 0; i < iterations; ++i) {
-        // Run `seed` (1, 2, ...) uses local search seeds 1..400, 401..800, ...
-        // Each local search gets its own seed because RandomSolver calls srand(seed),
-        // so a repeated seed would give the same starting solution.
-        const int lsSeed = (seed - 1) * iterations + i + 1;
-
-        // random starting solution + local search to a local optimum
-        std::vector<int> solution = localSearch->solve(problem, lsSeed);
+        std::vector<int> solution = initialSolution;
+        localSearch->solve(problem, solution, rng);
 
         const int cost = problem.evaluate(solution);
         if (cost < bestCost) {
@@ -22,5 +17,4 @@ std::vector<int> MSLS::solve(const Problem& problem, int seed) {
             best = std::move(solution);
         }
     }
-    return best;
 }

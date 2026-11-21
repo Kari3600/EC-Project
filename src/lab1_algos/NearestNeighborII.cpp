@@ -2,17 +2,20 @@
 
 #include <vector>
 
-std::vector<int> NearestNeighborII::solve(const Problem& problem, int seed) {
+void NearestNeighborII::solve(const Problem& problem, std::vector<int>& solution, std::mt19937& rng) {
     const int size = problem.getSize();
     const int minLength = problem.minLength();
-    std::vector<int> solution(minLength);
+    const int insize = solution.size();
 
-    int currentNode = seed % size;
     std::vector<bool> visited(size, false);
-    solution[0] = currentNode;
-    visited[currentNode] = true;
 
-    for (int i = 1; i < minLength; ++i) {
+    for (int node : solution) {
+        visited[node] = true;
+    }
+
+    solution.resize(problem.minLength());
+
+    for (int i = insize; i < minLength; ++i) {
         int injectNode = -1;
         int injectPose = -2;
         int bestScore = 0;
@@ -57,6 +60,4 @@ std::vector<int> NearestNeighborII::solve(const Problem& problem, int seed) {
         solution[pos] = injectNode;
         visited[injectNode] = true;
     }
-
-    return solution;
 }

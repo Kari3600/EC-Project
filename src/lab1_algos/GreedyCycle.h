@@ -9,7 +9,7 @@ class GreedyCycle : public Solver {
         const char* getName() const override {
             return "GreedyCycle";
         }
-        std::vector<int> solve(const Problem& problem, int seed) override;
+        void solve(const Problem& problem, std::vector<int>& solution, std::mt19937& seed) override;
 };
 
 #endif

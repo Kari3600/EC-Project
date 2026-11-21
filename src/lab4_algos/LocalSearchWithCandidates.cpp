@@ -8,13 +8,6 @@
 
 #include "../lab1_algos/RandomSolver.h"
 
-std::vector<int> LocalSearchWithCandidates::getInitialSolution(const Problem& problem, int seed) const {
-    if (initialSolver == nullptr) {
-        throw std::logic_error(name + " needs a construction heuristic for the starting solution (--init)");
-    }
-    return initialSolver->solve(problem, seed);
-}
-
 // deltas: change of the objective after the move, negative = improvement
 // replace solution[position] with newNode (not in the cycle)
 int LocalSearchWithCandidates::interDelta(const Problem& problem, const std::vector<int>& solution, int position, int newNode) const {
@@ -131,13 +124,7 @@ bool LocalSearchWithCandidates::steepestStep(const Problem& problem, std::vector
 
 
 
-std::vector<int> LocalSearchWithCandidates::solve(const Problem& problem, int seed) {
-    rng.seed(std::rand());   // seeded by test_algo --seed, so every run is different but reproducible
-
-    // we need to remember to count later how much time did it take compared to the whole algorithm
-    std::vector<int> solution = getInitialSolution(problem, seed);
-    initialSolution = solution;
-
+void LocalSearchWithCandidates::solve(const Problem& problem, std::vector<int>& solution, std::mt19937& rng) {
     std::vector<bool> selected(problem.getSize(), false);
     for (int node : solution) {
         selected[node] = true;
@@ -177,5 +164,4 @@ std::vector<int> LocalSearchWithCandidates::solve(const Problem& problem, int se
         }
         ++steps;
     }
-    return solution;
 }

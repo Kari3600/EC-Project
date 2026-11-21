@@ -13,35 +13,27 @@ enum IntraMove { Nodes, Edges };
 
 class LocalSearch : public Solver {
     public:
-        LocalSearch(SearchType search, IntraMove intra, Solver* initialSolver)
-            : search(search), intra(intra), initialSolver(initialSolver) {
+        LocalSearch(SearchType search, IntraMove intra)
+            : search(search), intra(intra){
             name = std::string("LS_")
                  + (search == SearchType::Greedy ? "greedy" : "steepest")
-                 + (intra == IntraMove::Nodes ? "_nodes" : "_edges")
-                 + (initialSolver->getName());   // e.g. LS_greedy_edges_random
+                 + (intra == IntraMove::Nodes ? "_nodes" : "_edges");
         }
         const char* getName() const override {
             return name.c_str();
         }
-        std::vector<int> solve(const Problem& problem, int seed) override;
+        void solve(const Problem& problem, std::vector<int>& solution, std::mt19937& rng) override;
         // local search from the given solution (used by ILS); updates getSteps()
-        std::vector<int> improve(const Problem& problem, std::vector<int> solution);
         std::map<std::string, std::any> getLastRunStatistics() const override {
             return {{"Steps", steps}};
         }
 
-        // starting solution of the last solve() call
-        const std::vector<int>& getInitialSolution() const {
-            return initialSolution;
-        }
         // number of improving moves applied in the last solve() call
         int getSteps() const {
             return steps;
         }
 
     private:
-        std::vector<int> getInitialSolution(const Problem& problem, int seed) const;
-
         // deltas: change of the objective after the move, negative = improvement
         int interDelta(const Problem& problem, const std::vector<int>& solution, int position, int newNode) const;
         int twoNodesDelta(const Problem& problem, const std::vector<int>& solution, int i, int j) const;

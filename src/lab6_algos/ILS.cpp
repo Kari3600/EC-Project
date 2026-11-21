@@ -6,6 +6,8 @@
 #include <stdexcept>
 #include <utility>
 
+using randomInt = std::uniform_int_distribution<int>;
+
 static const int GUIDED_CANDIDATES = 10;   // guided: a replacement is drawn from this many nearest free nodes
 
 Perturbation ILS::parsePerturbation(const std::string& text) {
@@ -26,14 +28,10 @@ const char* ILS::perturbationName(Perturbation perturbation) {
     return "?";
 }
 
-int ILS::randomInt(int from, int to) {
-    return std::uniform_int_distribution<int>(from, to)(rng);
-}
-
-int ILS::randomUnselected(const std::vector<bool>& selected) {
+int ILS::randomUnselected(const std::vector<bool>& selected, std::mt19937& rng) {
     // about half of the nodes are free, so rejection sampling needs ~2 draws
     while (true) {
-        int node = randomInt(0, static_cast<int>(selected.size()) - 1);
+        int node = randomInt(0, static_cast<int>(selected.size()) - 1)(rng);
         if (!selected[node]) {
             return node;
         }
@@ -43,17 +41,17 @@ int ILS::randomUnselected(const std::vector<bool>& selected) {
 // k random moves, each with probability 1/2:
 //   intra: reverse solution[i..j] (two-edges exchange),
 //   inter: replace a random node of the cycle with a random node outside it
-void ILS::randomMoves(std::vector<int>& solution, std::vector<bool>& selected) {
+void ILS::randomMoves(std::vector<int>& solution, std::vector<bool>& selected, std::mt19937& rng) {
     const int m = static_cast<int>(solution.size());
     for (int t = 0; t < strength; ++t) {
-        if (randomInt(0, 1) == 0) {
+        if (randomInt(0, 1)(rng) == 0) {
             // j - i < m - 1: reversing the whole cycle would not change it
-            int i = randomInt(0, m - 2);
-            int j = randomInt(i + 1, std::min(m - 1, i + m - 2));
+            int i = randomInt(0, m - 2)(rng);
+            int j = randomInt(i + 1, std::min(m - 1, i + m - 2))(rng);
             std::reverse(solution.begin() + i, solution.begin() + j + 1);
         } else {
-            int pos = randomInt(0, m - 1);
-            int newNode = randomUnselected(selected);
+            int pos = randomInt(0, m - 1)(rng);
+            int newNode = randomUnselected(selected, rng);
             selected[solution[pos]] = false;
             selected[newNode] = true;
             solution[pos] = newNode;
@@ -63,16 +61,16 @@ void ILS::randomMoves(std::vector<int>& solution, std::vector<bool>& selected) {
 
 // replace k consecutive nodes of the cycle with k random nodes outside it
 // (the removed nodes cannot come back, because they are still selected while drawing)
-void ILS::segment(std::vector<int>& solution, std::vector<bool>& selected) {
+void ILS::segment(std::vector<int>& solution, std::vector<bool>& selected, std::mt19937& rng) {
     const int m = static_cast<int>(solution.size());
     const int freeCount = static_cast<int>(selected.size()) - m;
     const int k = std::min({strength, m, freeCount});
-    const int start = randomInt(0, m - 1);
+    const int start = randomInt(0, m - 1)(rng);
 
     std::vector<int> removed;
     for (int t = 0; t < k; ++t) {
         int pos = (start + t) % m;
-        int newNode = randomUnselected(selected);
+        int newNode = randomUnselected(selected, rng);
         selected[newNode] = true;
         removed.push_back(solution[pos]);
         solution[pos] = newNode;
@@ -84,12 +82,12 @@ void ILS::segment(std::vector<int>& solution, std::vector<bool>& selected) {
 
 // k times: cut the cycle into A B C D at 3 random points and reconnect it as A C B D
 // (3 edges change, no segment is reversed, so one two-edges move cannot undo it)
-void ILS::doubleBridge(std::vector<int>& solution) {
+void ILS::doubleBridge(std::vector<int>& solution, std::mt19937& rng) {
     const int m = static_cast<int>(solution.size());
     for (int t = 0; t < strength; ++t) {
         int a = 0, b = 0, c = 0;
         while (!(a < b && b < c)) {
-            int cuts[3] = {randomInt(1, m - 1), randomInt(1, m - 1), randomInt(1, m - 1)};
+            int cuts[3] = {randomInt(1, m - 1)(rng), randomInt(1, m - 1)(rng), randomInt(1, m - 1)(rng)};
             std::sort(cuts, cuts + 3);
             a = cuts[0]; b = cuts[1]; c = cuts[2];
         }
@@ -102,7 +100,7 @@ void ILS::doubleBridge(std::vector<int>& solution) {
 //   cost[v] + d(prev, v) + d(v, next) - d(prev, next)  (what removing v from the cycle would save),
 // and replace each with a random one of the GUIDED_CANDIDATES free nodes nearest to it
 // (distance + cost of the new node)
-void ILS::guided(const Problem& problem, std::vector<int>& solution, std::vector<bool>& selected) {
+void ILS::guided(const Problem& problem, std::vector<int>& solution, std::vector<bool>& selected, std::mt19937& rng) {
     const int m = static_cast<int>(solution.size());
     const int* costs = problem.getCosts();
     const int freeCount = static_cast<int>(selected.size()) - m;
@@ -129,7 +127,7 @@ void ILS::guided(const Problem& problem, std::vector<int>& solution, std::vector
                 }
             }
         }
-        int newNode = candidates[randomInt(0, static_cast<int>(candidates.size()) - 1)];
+        int newNode = candidates[randomInt(0, static_cast<int>(candidates.size()) - 1)(rng)];
         selected[newNode] = true;   // not drawn again for another position
         replacements.push_back({pos, newNode});
     }
@@ -139,19 +137,18 @@ void ILS::guided(const Problem& problem, std::vector<int>& solution, std::vector
     }
 }
 
-void ILS::perturb(const Problem& problem, std::vector<int>& solution, std::vector<bool>& selected) {
+void ILS::perturb(const Problem& problem, std::vector<int>& solution, std::vector<bool>& selected, std::mt19937& rng) {
     switch (perturbation) {
-        case Perturbation::RandomMoves: randomMoves(solution, selected); break;
-        case Perturbation::Segment: segment(solution, selected); break;
-        case Perturbation::DoubleBridge: doubleBridge(solution); break;
-        case Perturbation::Guided: guided(problem, solution, selected); break;
+        case Perturbation::RandomMoves: randomMoves(solution, selected, rng); break;
+        case Perturbation::Segment: segment(solution, selected, rng); break;
+        case Perturbation::DoubleBridge: doubleBridge(solution, rng); break;
+        case Perturbation::Guided: guided(problem, solution, selected, rng); break;
     }
 }
 
-std::vector<int> ILS::solve(const Problem& problem, int seed) {
+void ILS::solve(const Problem& problem, std::vector<int>& solution, std::mt19937& rng) {
     using Clock = std::chrono::steady_clock;
     const auto startTime = Clock::now();
-    rng.seed(seed);
 
     const int n = problem.getSize();
     if (perturbation == Perturbation::Guided) {
@@ -167,21 +164,20 @@ std::vector<int> ILS::solve(const Problem& problem, int seed) {
         }
     }
 
-    // random starting solution improved by LS
-    std::vector<int> x = localSearch->solve(problem, seed);
-    int fx = problem.evaluate(x);
+    localSearch->solve(problem, solution, rng);
+    int fx = problem.evaluate(solution);
     trace.assign(1, fx);
     sameOptimum = 0;
 
     std::vector<bool> selected(n);
     while (std::chrono::duration<double, std::milli>(Clock::now() - startTime).count() < timeMs) {
-        std::vector<int> y = x;
+        std::vector<int> y = solution;
         std::fill(selected.begin(), selected.end(), false);
         for (int node : y) {
             selected[node] = true;
         }
-        perturb(problem, y, selected);
-        y = localSearch->improve(problem, std::move(y));
+        perturb(problem, y, selected, rng);
+        localSearch->solve(problem, y, rng);
 
         const int fy = problem.evaluate(y);
         trace.push_back(fy);
@@ -189,9 +185,8 @@ std::vector<int> ILS::solve(const Problem& problem, int seed) {
             ++sameOptimum;   // most likely LS went back to x (compared by objective value)
         }
         if (fy < fx) {
-            x = std::move(y);
+            solution = std::move(y);
             fx = fy;
         }
     }
-    return x;
 }

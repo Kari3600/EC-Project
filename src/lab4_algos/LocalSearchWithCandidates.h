@@ -20,15 +20,11 @@ class LocalSearchWithCandidates : public Solver {
         const char* getName() const override {
             return name.c_str();
         }
-        std::vector<int> solve(const Problem& problem, int seed) override;
+        void solve(const Problem& problem, std::vector<int>& solution, std::mt19937& rng) override;
         std::map<std::string, std::any> getLastRunStatistics() const override {
             return {{"Steps", steps}};
         }
 
-        // starting solution of the last solve() call
-        const std::vector<int>& getInitialSolution() const {
-            return initialSolution;
-        }
         // number of improving moves applied in the last solve() call
         int getSteps() const {
             return steps;
@@ -49,10 +45,7 @@ class LocalSearchWithCandidates : public Solver {
                           const std::vector<std::vector<int>>& candidateNeighbors);
 
         int candidatesCount;
-        std::mt19937 rng;
         std::string name;
-        Solver* initialSolver = new RandomSolver();
-        std::vector<int> initialSolution;
         int steps = 0;
 };
 

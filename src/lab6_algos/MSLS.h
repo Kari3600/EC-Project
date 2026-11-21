@@ -19,9 +19,9 @@ class MSLS : public Solver {
         const char* getName() const override {
             return name.c_str();
         }
-        std::vector<int> solve(const Problem& problem, int seed) override;
+        void solve(const Problem& problem, std::vector<int>& solution, std::mt19937& rng) override;
         std::map<std::string, std::any> getLastRunStatistics() const override {
-            return {{"LS runs", iterations}};
+            return {{"iterations", iterations}};
         }
 
     private:

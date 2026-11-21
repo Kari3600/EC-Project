@@ -102,16 +102,7 @@ void ListOfMovesSolver::generateInterMoves(
     }
 }
 
-
-std::vector<int> ListOfMovesSolver::solve(const Problem& problem, int seed) {
-    // we need to remember to count later how much time did it take compared to the whole algorithm
-    std::vector<int> solution = initialSolver->solve(problem, seed);
-    initialSolution = solution;
-    return improve(problem, std::move(solution));
-}
-
-// runs the local search from the given solution until a local optimum is reached
-std::vector<int> ListOfMovesSolver::improve(const Problem& problem, std::vector<int> solution) {
+void ListOfMovesSolver::solve(const Problem& problem, std::vector<int>& solution, std::mt19937& rng) {
     steps = 0;
 
     std::vector<bool> selected(problem.getSize(), false);
@@ -267,6 +258,4 @@ std::vector<int> ListOfMovesSolver::improve(const Problem& problem, std::vector<
         ++steps;
         it = listOfMoves.begin();
     }
-
-    return solution;
 }

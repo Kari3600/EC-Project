@@ -28,25 +28,17 @@ struct Compare {
 
 class ListOfMovesSolver : public Solver {
     public:
-        ListOfMovesSolver(Solver* initialSolver)
-            : initialSolver(initialSolver) {
-            name = std::string("LMS_")
-                 + initialSolver->getName();
+        ListOfMovesSolver() {
+            name = std::string("LMS");
         }
         const char* getName() const override {
             return name.c_str();
         }
-        std::vector<int> solve(const Problem& problem, int seed) override;
-        // local search from the given solution (used by ILS); updates getSteps()
-        std::vector<int> improve(const Problem& problem, std::vector<int> solution);
+        void solve(const Problem& problem, std::vector<int>& solution, std::mt19937& rng) override;
         std::map<std::string, std::any> getLastRunStatistics() const override {
             return {{"Steps", steps}};
         }
 
-        // starting solution of the last solve() call
-        const std::vector<int>& getInitialSolution() const {
-            return initialSolution;
-        }
         // number of improving moves applied in the last solve() call
         int getSteps() const {
             return steps;
@@ -72,8 +64,6 @@ class ListOfMovesSolver : public Solver {
                           const std::vector<std::vector<int>>& candidateNeighbors);
 
         std::string name;
-        Solver* initialSolver;
-        std::vector<int> initialSolution;
         int steps = 0;
 };
 

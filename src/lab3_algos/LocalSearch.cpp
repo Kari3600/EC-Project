@@ -6,16 +6,6 @@
 #include <stdexcept>
 #include <utility>
 
-#include "../lab1_algos/RandomSolver.h"
-
-// construction heuristic chosen per instance (best one from the previous labs)
-std::vector<int> LocalSearch::getInitialSolution(const Problem& problem, int seed) const {
-    if (initialSolver == nullptr) {
-        throw std::logic_error(name + " needs a construction heuristic for the starting solution (--init)");
-    }
-    return initialSolver->solve(problem, seed);
-}
-
 // deltas: change of the objective after the move, negative = improvement
 // replace solution[position] with newNode (not in the cycle)
 int LocalSearch::interDelta(const Problem& problem, const std::vector<int>& solution, int position, int newNode) const {
@@ -208,17 +198,7 @@ bool LocalSearch::steepestStep(const Problem& problem, std::vector<int>& solutio
 
 
 
-std::vector<int> LocalSearch::solve(const Problem& problem, int seed) {
-    rng.seed(std::rand());   // seeded by test_algo --seed, so every run is different but reproducible
-
-    // we need to remember to count later how much time did it take compared to the whole algorithm
-    std::vector<int> solution = getInitialSolution(problem, seed);
-    initialSolution = solution;
-    return improve(problem, std::move(solution));
-}
-
-// runs the local search from the given solution until a local optimum is reached
-std::vector<int> LocalSearch::improve(const Problem& problem, std::vector<int> solution) {
+void LocalSearch::solve(const Problem& problem, std::vector<int>& solution, std::mt19937& rng) {
     std::vector<bool> selected(problem.getSize(), false);
     for (int node : solution) {
         selected[node] = true;
@@ -234,5 +214,4 @@ std::vector<int> LocalSearch::improve(const Problem& problem, std::vector<int> s
         }
         ++steps;
     }
-    return solution;
 }

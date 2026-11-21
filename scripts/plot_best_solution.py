@@ -10,7 +10,7 @@ Usage (from anywhere):
 """
 
 import argparse
-import csv
+import json
 from pathlib import Path
 
 import matplotlib
@@ -39,16 +39,12 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Plot best solutions from run_experiment.py results.")
     parser.add_argument("--out-dir", type=Path, default=REPO_ROOT / "reports" / "figures",
                         help="directory to save the figure in (default: reports/figures)")
-    parser.add_argument("--name", default="lab1_plot",
-                        help="file name prefix; the instance name is appended (default: lab1_plot)")
-    parser.add_argument("--format", default="png", help="image format, e.g. png, pdf, svg (default: png)")
-    parser.add_argument("--results", type=Path, nargs="+", default=[REPO_ROOT / "results" / "lab1_best.csv"],
-                        help="best solutions CSV(s) written by run_experiment.py (default: results/lab1_best.csv)")
     parser.add_argument("--data-dir", type=Path, default=REPO_ROOT / "data",
                         help="directory with instance CSV files (default: data)")
+    parser.add_argument("--source", type=Path, default=REPO_ROOT / "results" / "lab7_results.json",
+                            help="data source file (default: results/lab7_results.json)")
+    parser.add_argument("--format", default="png", help="image format, e.g. png, pdf, svg (default: png)")
     parser.add_argument("--dpi", type=int, default=200, help="resolution for raster formats (default: 200)")
-    parser.add_argument("--method-pattern", default=".*",
-                        help="plot only methods matching this regex (default: all)")
     return parser.parse_args()
 
 
@@ -67,15 +63,22 @@ def read_instance(path):
     return xs, ys, costs
 
 
-def read_best(path, method_pattern=""):
+def read_best(path):
     """Return {instance: [(method, value, [nodes...]), ...]} keeping file order."""
     best = {}
-    with open(path, newline="") as f:
-        for row in csv.DictReader(f):
-            if not method_pattern.match(row["method"]):
-                continue
-            nodes = [int(v) for v in row["solution"].split()]
-            best.setdefault(row["instance"], []).append((row["method"], int(row["value"]), nodes))
+    with open(path, "r") as file:
+        data = json.load(file)
+        for test_label, instances in data.items():
+            for instance, test_cases in instances.items():
+                bestScore = float("inf")
+                bestSolution = []
+                for test_case in test_cases:
+                    chain_last = test_case[-1]
+                    score = chain_last["result"]["objective"]
+                    if score < bestScore:
+                        bestScore = score
+                        bestSolution = chain_last["result"]["solution"]
+                best.setdefault(instance, []).append((test_label, bestScore, bestSolution))
     return best
 
 
@@ -109,10 +112,7 @@ def plot_solution(ax, xs, ys, costs, nodes, norm):
 
 def main():
     args = parse_args()
-    best = {}
-    for results in args.results:
-        for instance, solutions in read_best(results, re.compile(args.method_pattern)).items():
-            best.setdefault(instance, []).extend(solutions)
+    best = read_best(args.source)
     args.out_dir.mkdir(parents=True, exist_ok=True)
 
     legend_items = [
@@ -153,7 +153,10 @@ def main():
         fig.legend(handles=legend_items, loc="outside lower center", ncol=4,
                    frameon=False, fontsize=9, labelcolor=TEXT_SECONDARY)
 
-        out_path = args.out_dir / f"{args.name}_{instance}.{args.format}"
+        basename = args.source.stem
+        if basename.endswith("_results"):
+            basename = basename[:-8]
+        out_path = args.out_dir / f"{basename}_plot_{instance}.{args.format}"
         fig.savefig(out_path, dpi=args.dpi, facecolor=SURFACE)
         plt.close(fig)
         print(f"Saved {out_path}")
