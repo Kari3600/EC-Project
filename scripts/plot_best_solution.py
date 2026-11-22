@@ -34,6 +34,8 @@ TEXT_PRIMARY = "#0b0b0b"
 TEXT_SECONDARY = "#52514e"
 EDGE_COLOR = "#52514e"
 
+NODES_PER_LINE = 20
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Plot best solutions from run_experiment.py results.")
@@ -161,6 +163,28 @@ def main():
         plt.close(fig)
         print(f"Saved {out_path}")
 
+    print("# Visualization of the best solutions \n" +
+        " \n" +
+        "Each panel shows the best solution of one method from the tables. Node color \n" +
+        "encodes the node cost (darker means more expensive). Selected nodes are drawn \n" +
+        "larger, the solid line shows the cycle, and the dotted line marks the edge from \n" +
+        "the last node back to the first. \n")
+
+    for instance in best:
+        print(f"![Best solutions for {instance}]({args.out_dir}/{basename}_plot_{instance}.{args.format}) \n")
+
+
+    print("# Best solutions \n" +
+        " \n" +
+        "The best solutions of the earlier methods are listed in the previous lab reports. \n")
+    for instance, solutions in best.items():
+        print(f"## Instance {instance} \n")
+        for method, value, nodes in solutions:
+            print(f"**{method}** (objective {value:,}) \n\n```")
+            for line in range(int(len(nodes) / NODES_PER_LINE)):
+                print(" ".join(map(lambda v: f"{v:>3}", nodes[line*NODES_PER_LINE:(line+1)*NODES_PER_LINE])))
+            print("``` \n")
+        
 
 if __name__ == "__main__":
     main()

@@ -34,8 +34,8 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Run all algorithms on all instances via test_algo.")
     parser.add_argument("--source", type=Path, default=REPO_ROOT / "tests" / "lab7_test.py",
                         help="source of the test")
-    parser.add_argument("--output", type=Path, default=REPO_ROOT / "results" / "lab7_results.json",
-                        help="path to the result file")
+    parser.add_argument("--out-dir", type=Path, default=REPO_ROOT / "results",
+                        help="path to the output directory")
     parser.add_argument("--instances", type=Path, nargs="+",
                         default=[REPO_ROOT / "data" / "InstanceA.csv", REPO_ROOT / "data" / "InstanceB.csv"],
                         help="instance files (default: data/InstanceA.csv data/InstanceB.csv)")
@@ -75,16 +75,20 @@ def run_once(binary, algorithm, instance, initialSolution, params):
 
 def main():
     args = parse_args()
-    if not args.no_build:
-        build(args.bin)
-    results_path = args.output
-    results_path.parent.mkdir(parents=True, exist_ok=True)
+    
     source_file = args.source
     spec = importutil.spec_from_file_location(
         source_file.stem, source_file
     )
     module = importutil.module_from_spec(spec)
     spec.loader.exec_module(module)
+
+    if not args.no_build:
+        build(args.bin)
+
+    args.out_dir.mkdir(parents=True, exist_ok=True)
+
+    results_path = args.out_dir / f"{module.NAME}_results.json"    
 
     with open(results_path, "w", newline="") as results_file:
         results_file.write("{\n")

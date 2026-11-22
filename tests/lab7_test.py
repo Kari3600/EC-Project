@@ -1,3 +1,5 @@
+NAME = "lab7"
+
 RUNS = 20
 TIME_LIMIT = 1500
 RANDOM_RUNS = 200
@@ -16,3 +18,6 @@ def generate():
                 ("ListOfMovesSolver", {}),
                 ("LNS", {"timeMs": TIME_LIMIT, "discardPercent": 0.3, "destroyer": destroyer, "repairer": "GreedyCycle_2regret --alpha 0.5", "postprocessor": post_processor})
             ] for seed in range(RUNS)])
+
+def measurements():
+    yield ("Steps", lambda d: len(d["trace"]) if "trace" in d else None, lambda v: f"{v:,}".replace(",","\\,"))

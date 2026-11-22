@@ -7,7 +7,7 @@
 
 class Destroyer {
     public:
-        virtual void destroy(const Problem& problem, std::vector<int>& solution, std::mt19937 rng, int amount) const = 0;
+        virtual void destroy(const Problem& problem, std::vector<int>& solution, std::mt19937& rng, int amount) const = 0;
         virtual ~Destroyer() = default;
 };
 

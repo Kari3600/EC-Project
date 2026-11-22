@@ -2,13 +2,16 @@ import json
 
 from pathlib import Path
 import argparse
+import importlib.util as importutil
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Plot best solutions from run_experiment.py results.")
-    parser.add_argument("--source", type=Path, default=REPO_ROOT / "results" / "lab7_results.json",
-                        help="data source file (default: results/lab7_results.json)")
+    parser.add_argument("--source", type=Path, default=REPO_ROOT / "tests" / "lab7_test.py",
+                        help="test source file (default: tests/lab7_test.py)")
+    parser.add_argument("--data", type=Path, default=REPO_ROOT / "results",
+                        help="data source file or path (default: results)")
     return parser.parse_args()
 
 def generate_statistics_table(title, data, value_mapper, vf = lambda x: str(x)):
@@ -49,7 +52,21 @@ def generate_statistics_table(title, data, value_mapper, vf = lambda x: str(x)):
 
 def main():
     args = parse_args()
-    with open(args.source, "r") as file:
+
+    source_file = args.source
+    spec = importutil.spec_from_file_location(
+        source_file.stem, source_file
+    )
+    module = importutil.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    data_file = args.data
+    if data_file.is_dir():
+        data_file = data_file / f"{module.NAME}_results.json"
+
+    with open(data_file, "r") as file:
+
+
         data = json.load(file)
         
         # Generate objective table
@@ -58,7 +75,8 @@ def main():
         # Generate time table
         generate_statistics_table("Running time [ms]", data, lambda d: d["time"]/1000, vf = lambda v: f"{v:.3f}")
 
-        generate_statistics_table("Steps", data, lambda d: len(d["trace"]) if "trace" in d else None, vf = lambda v: f"{v:,}".replace(",","\\,"))
+        for label, value_mapper, vf in module.measurements():
+            generate_statistics_table(label, data, value_mapper, vf)
 
 if __name__ == "__main__":
     main()

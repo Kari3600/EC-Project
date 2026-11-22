@@ -1,6 +1,6 @@
 #include "RandomChainDestroyer.h"
 
-void RandomChainDestroyer::destroy(const Problem& problem, std::vector<int>& solution, std::mt19937 rng, int amount) const {
+void RandomChainDestroyer::destroy(const Problem& problem, std::vector<int>& solution, std::mt19937& rng, int amount) const {
     for (int i = 0; i < chainCount; i++) {
         int chainLength = amount * (i+1) / chainCount - amount * i / chainCount;
         int len = solution.size();
