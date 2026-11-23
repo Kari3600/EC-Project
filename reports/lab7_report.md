@@ -76,7 +76,9 @@ The random-chain destroyer removes one or five contiguous chains. Its first
 implementation with one chain removes a chain of 30 nodes. For five chains,
 the 30 removals are divided into five chains of six consecutive nodes. Every
 chain starts at a position chosen uniformly at random; if the chain crosses
-the end of the vector, the removal continues from the beginning.
+the end of the vector, the removal continues from the beginning. The chains are
+removed one after another from the already shortened cycle, so a later chain may
+occasionally touch or span the gap left by an earlier one.
 
 ```
 procedure RANDOM-CHAIN-DESTROY(C, r, q):
@@ -222,6 +224,8 @@ slightly worse. The postprocessor consistently improves the averages for all
 three destroyers, and it reduces the dispersion of the
 five-chain configuration on instance A.
 
+\newpage
+
 # Visualization of the best solutions 
  
 Each panel shows the best solution of one method from the tables. Node color 
@@ -229,9 +233,9 @@ encodes the node cost (darker means more expensive). Selected nodes are drawn
 larger, the solid line shows the cycle, and the dotted line marks the edge from 
 the last node back to the first. 
 
-![Best solutions for InstanceA](figures/lab7_plot_InstanceA.png) 
+![Best solutions for InstanceA](figures/lab7_plot_InstanceA.png){height=85%} 
 
-![Best solutions for InstanceB](figures/lab7_plot_InstanceB.png) 
+![Best solutions for InstanceB](figures/lab7_plot_InstanceB.png){height=85%} 
 
 # Best solutions 
  
