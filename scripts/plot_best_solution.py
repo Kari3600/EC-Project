@@ -21,6 +21,7 @@ from matplotlib.colors import LinearSegmentedColormap, Normalize
 from matplotlib.lines import Line2D
 
 import re
+import textwrap
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -140,7 +141,8 @@ def main():
         for ax, (method, value, nodes) in zip(axes, solutions):
             ax.set_facecolor(SURFACE)
             plot_solution(ax, xs, ys, costs, nodes, norm)
-            ax.set_title(f"{method}\nobjective {value:,}".replace("_", "\n"),
+            title = textwrap.fill(method.replace("_", " "), width=48)   # long names do not overlap
+            ax.set_title(f"{title}\nobjective {value:,}",
                          fontsize=10, color=TEXT_PRIMARY)
         for ax in axes[len(solutions):]:
             ax.set_visible(False)

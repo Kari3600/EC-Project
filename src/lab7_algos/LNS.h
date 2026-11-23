@@ -20,7 +20,7 @@ class LNS : public Solver {
         }
         void solve(const Problem& problem, std::vector<int>& solution, std::mt19937& rng) override;
         std::map<std::string, std::any> getLastRunStatistics() const override {
-            return {{"iterations", static_cast<int>(trace.size())},
+            return {{"iterations", static_cast<int>(trace.size()) - 1},   // main loop iterations
                     {"same_optimum", sameOptimum},
                     {"trace", trace}};
         }
@@ -35,8 +35,8 @@ class LNS : public Solver {
         std::string name;
 
         // statistics of the last solve() call
-        std::vector<int> trace;   // objective after every LS run (the first one is the LS from the random start)
-        int sameOptimum = 0;      // LS runs after a perturbation that returned a solution as good as x
+        std::vector<int> trace;   // objective of the starting solution, then of every candidate (one per main loop iteration)
+        int sameOptimum = 0;      // candidates as good as the current solution
 };
 
 #endif

@@ -8,8 +8,8 @@
 #include <vector>
 
 // Multiple start local search: runs the given local search `iterations` times, each time from
-// a different random starting solution, and returns the best local optimum found.
-// The local search must build its own starting solution with RandomSolver.
+// a different random starting solution (drawn from rng), and returns the best local optimum found.
+// The solution passed in is ignored.
 class MSLS : public Solver {
     public:
         MSLS(Solver* localSearch, int iterations = 400)

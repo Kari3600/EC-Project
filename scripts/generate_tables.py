@@ -20,14 +20,14 @@ def generate_statistics_table(title, data, value_mapper, vf = lambda x: str(x)):
           "\\centering \n" +
           "\\small \n" +
           "\\textbf{" + title + "}\\\\[6pt] \n" +
-          "\\begin{tabular}{l r@{\ (}r@{ -- }r@{)\\hspace{1.5em}} r@{\ (}r@{ -- }r@{)}} \n" +
+          "\\begin{tabular}{l r@{\\ (}r@{ -- }r@{)\\hspace{1.5em}} r@{\\ (}r@{ -- }r@{)}} \n" +
           "\\toprule \n" +
           "Method & \\multicolumn{3}{c}{Instance A} & \\multicolumn{3}{c}{Instance B} \\\\ \n" +
-          "\\cmidrule(lr){2-4} \cmidrule(l){5-7} \n" +
+          "\\cmidrule(lr){2-4} \\cmidrule(l){5-7} \n" +
           "& \\multicolumn{3}{c}{av (min -- max)} & \\multicolumn{3}{c}{av (min -- max)} \\\\ \n" +
           "\\midrule")
     for test_label, instances in data.items():
-        print(f"{test_label: <{maxlen+1}}", end="")
+        cells = []
         for instance, test_cases in instances.items():
             min_score = float('inf')
             max_score = 0
@@ -41,11 +41,15 @@ def generate_statistics_table(title, data, value_mapper, vf = lambda x: str(x)):
                 max_score = max(max_score, score)
                 avg_score += score
                 score_count += 1
-            if score_count == 0: continue
+            if score_count == 0:
+                cells.append(" & \\multicolumn{3}{c}{--}")
+                continue
             avg_score /= score_count
-            avg_score = int(avg_score)
-            print(f" & {vf(avg_score)} & {vf(min_score)} & {vf(max_score)}", end="")
-        print("")
+            if isinstance(min_score, int):   # integer statistic -> integer average
+                avg_score = round(avg_score)
+            cells.append(f" & {vf(avg_score)} & {vf(min_score)} & {vf(max_score)}")
+        if all("--" in c for c in cells): continue   # the statistic does not apply to this method
+        print(f"{test_label: <{maxlen+1}}" + "".join(cells) + " \\\\")
     print("\\bottomrule \n" +
           "\\end{tabular} \n" +
           "\\end{table} \n")
@@ -73,7 +77,7 @@ def main():
         generate_statistics_table("Objective function", data, lambda d: d["objective"], vf = lambda v: f"{v:,}".replace(",","\\,"))
 
         # Generate time table
-        generate_statistics_table("Running time [ms]", data, lambda d: d["time"]/1000, vf = lambda v: f"{v:.3f}")
+        generate_statistics_table("Running time [ms]", data, lambda d: d["time"]/1000, vf = lambda v: f"{v:.1f}")
 
         for label, value_mapper, vf in module.measurements():
             generate_statistics_table(label, data, value_mapper, vf)
