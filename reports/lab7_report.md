@@ -30,262 +30,218 @@ contain $n=200$ nodes, so each solution selects $m=100$.
 
 ## Large neighborhood search (LNS)
 
-LNS repeatedly destroys a part of the current solution $x$ and repairs it with
-a greedy heuristic. The candidate $y$ replaces $x$ only if it is strictly
-better, so $x$ is always the best solution found so far.
+Large Neighborhood Search alternates destruction and reconstruction of a
+current solution. At every iteration it copies the current cycle, removes
+$r = 30$ nodes ($30\%$ of $m=100$), repairs it to a complete 100-node cycle,
+optionally improves the repaired candidate with local search, and accepts the
+candidate for the search only if it improves the best objective found.
 
 ```
-procedure LNS(timeLimit):
-    x <- random solution of m = 100 nodes
-    x <- LocalSearch(x)                        (always applied to the start)
+procedure LNS(current, timeLimit):
+    best <- current
     while elapsed time < timeLimit:
-        y <- copy(x)
-        Destroy(y, r)                          (remove r = 30 nodes, 30% of m)
-        Repair(y)                              (greedy weighted 2-regret)
-        if the LS version is used:
-            y <- LocalSearch(y)
-        if f(y) < f(x):
-            x <- y
-    return x
+        candidate <- copy(current)
+        destroy(candidate, r)
+        repair(candidate)
+        if postprocessor is enabled:
+            postprocessor(candidate)
+        if f(candidate) < f(best):
+            current <- candidate
+            best <- candidate
+    return best
 ```
 
-The starting solution is a random selection of 100 nodes in random order,
-improved with the steepest local search with the list of moves (lab 5,
-`ListOfMovesSolver`), which is also used after the repair in the LS versions.
-It is the best (fastest) version of steepest local search we implemented: its
-neighborhood contains the inter-route exchange of a selected node with an
-unselected one and the intra-route two-edges exchange. The stopping condition
-is the running time (see the computational experiment).
+The search is initialized from a random solution of 100 nodes that is first
+improved by `ListOfMovesSolver`. All six LNS variants use a limit of 2500 ms
+and 20 independent runs, but the destroyer and repair/postprocessing stages
+are configured differently as follows.
 
-## Destroy operators
+## Destroyers
 
-All three destroy operators remove $r = 0.3 \cdot m = 30$ of the 100 selected
-nodes. The removed nodes simply become unselected; the remaining 70 nodes keep
-their order, so the incomplete solution is still a cycle (the neighbors of a
-removed part become adjacent).
+### Random destroyer
 
-### Random nodes
-
-$r$ times a position is drawn uniformly from the current (shrinking) cycle and
-the node at this position is removed. The removed nodes are therefore scattered
-over the whole cycle.
+The random destroyer removes $r$ selected nodes, one at a time, choosing a
+position uniformly at random from the remaining cycle.
 
 ```
-procedure DESTROY-RANDOM(C, r):
+procedure RANDOM-DESTROY(C, r):
     repeat r times:
-        p <- uniform random position in 0 .. |C| - 1
-        remove C[p] from C
+        p <- random(0, |C| - 1)
+        C <- C without C[p]
 ```
 
-### One random subpath
+### Random-chain destroyer
 
-A single subpath of $r = 30$ consecutive nodes is removed. Its first position
-is drawn uniformly; when the subpath passes the end of the vector it continues
-from its beginning (the solution is a cycle).
-
-### Several random subpaths
-
-$q = 5$ subpaths of $r/q = 6$ consecutive nodes each are removed (the assignment
-allows 3--5 subpaths; we use five). The subpaths are removed one after another,
-each with a uniformly drawn start in the already shortened cycle, so two of them
-can occasionally be adjacent and form one longer gap; the total number of
-removed nodes is always 30. The one-subpath operator is the same procedure with
-$q = 1$.
+The random-chain destroyer removes one or five contiguous chains. Its first
+implementation with one chain removes a chain of 30 nodes. For five chains,
+the 30 removals are divided into five chains of six consecutive nodes. Every
+chain starts at a position chosen uniformly at random; if the chain crosses
+the end of the vector, the removal continues from the beginning.
 
 ```
-procedure DESTROY-SUBPATHS(C, r, q):
+procedure RANDOM-CHAIN-DESTROY(C, r, q):
     for i <- 1 to q:
-        l <- floor(r * i / q) - floor(r * (i - 1) / q)     (lengths sum up to r)
-        s <- uniform random position in 0 .. |C| - 1
-        remove C[s], C[s+1], ..., C[s+l-1] from C        (indices modulo |C|)
+        l <- r * i / q - r * (i - 1) / q
+        s <- random(0, |C| - 1)
+        C <- C with l nodes starting at s removed cyclically
 ```
 
-## Repair operator
+The destruction therefore removes 30 nodes in each case, but a random-chain
+destroyer keeps a chain of neighboring positions together while the random
+destroyer scatters the removed nodes around the cycle.
 
-The repair operator is the greedy cycle with the weighted 2-regret criterion
-($\alpha = 0.5$, lab 2), started from the incomplete 70-node cycle instead of a
-single node. It considers all unselected nodes, i.e. both the 30 just removed
-nodes and the 100 nodes that were already outside the solution. In each step,
-for every unselected node $v$ it computes the insertion cost into every edge
-$(a, b)$ of the cycle, $\Delta = d(a,v) + d(v,b) - d(a,b) + c(v)$, takes the
-best ($\Delta_1$) and second best ($\Delta_2$) one, and inserts the node that
-maximizes $\alpha(\Delta_2 - \Delta_1) - (1-\alpha)\Delta_1$ at its best edge.
-Nodes are inserted until the cycle again has 100 nodes, so the repair may select
-different nodes than the removed ones.
+## Repair and postprocessing
+
+The repairer is always `GreedyCycle_2regret` with $\alpha=0.5$. The
+destroyed solution contains only 70 nodes, so the repairer inserts nodes until
+the cycle again has 100 nodes using the weighted two-regret criterion.
+The candidates for insertion are all unselected nodes, i.e. both the 30 removed
+nodes and the nodes that were already outside the solution, so the repaired
+cycle may contain different nodes than before the destruction.
 
 ```
 procedure REPAIR(C):
-    while |C| < m:
+    while |C| < 100:
         for every unselected node v:
-            Delta1(v), Delta2(v) <- two smallest insertion costs of v into an edge of C
-        v* <- argmax over v of  alpha * (Delta2(v) - Delta1(v)) - (1 - alpha) * Delta1(v)
-        insert v* into its best edge of C
+            D1(v), D2(v) <- the two smallest insertion costs of v into an edge
+                            (a, b) of C: d(a,v) + d(v,b) - d(a,b) + c(v)
+        v* <- argmax over v of  alpha * (D2(v) - D1(v)) - (1 - alpha) * D1(v)
+        insert v* into its cheapest edge of C
 ```
 
-We use the same repair heuristic for both instances. In lab 2 the weighted
-2-regret greedy cycle was the best construction heuristic on instance A, and
-weighted 2-regret nearest neighbor was slightly better on B; we chose the greedy
-cycle for both because it works directly on a cycle, so the incomplete solution
-does not have to be cut into an open path. The insertion costs are computed
-from the objective delta (not by evaluating the whole solution); one repair of
-30 nodes takes about 1 ms.
+The weighted 2-regret greedy cycle was the best construction heuristic on
+instance A in lab 2 (on instance B the weighted 2-regret nearest neighbor was
+slightly better). We use the greedy cycle for both instances, because it works
+directly on the incomplete cycle, so it does not have to be cut into an open
+path.
 
-## Compared methods
+The repaired candidate is then tested in two variants: directly, or after
+running `ListOfMovesSolver` as a postprocessor. The postprocessor uses the
+steepest local search with the list of moves from lab 5 (our best version of
+steepest local search, also used for the initial solution): it can replace a selected node
+with an unselected node or exchange two edges of the cycle.
 
-Six LNS versions are tested: the three destroy operators (random nodes, one
-subpath, five subpaths), each with (LNS+LS) and without (LNS) local search after
-the repair. They are compared with the
-best methods of the previous assignments: the greedy cycle with weighted
-2-regret ($\alpha=0.5$, the best construction heuristic), the steepest local
-search with the list of moves from a random start (the local search used inside
-MSLS, ILS and LNS), MSLS with 400 local search runs, and the best ILS from lab 6
-(16 random moves as the perturbation).
+## Compared configurations
+
+The experiment compares the random destroyer and the random-chain destroyer
+with one and five chains, each with and without the local-search postprocessor.
+Greedy cycle, random-start list-of-moves local search, and 400-start MSLS are
+kept in the tables as baselines. ILS (with the perturbation of 16 random moves
+from lab 6) is also shown because it is the strongest previous local-search
+method.
 
 # Computational experiment
 
-Each MSLS, ILS and LNS version was run 20 times per instance (seeds 0--19; the
-seed is used both for the random starting solution and inside the method). The
-greedy heuristic was started from each of the 200 nodes and the local search
-from 200 random solutions. As required, the time limit of ILS and LNS is the
-average running time of MSLS: since the experiment was run on a different
-computer than lab 6, MSLS was rerun first on this machine (2558 ms on instance A
-and 2469 ms on B on average), and the limit was set to 2500 ms for both
-instances. The local search of the random starting solution of LNS (a few
-milliseconds) is run before the timed loop. Lower objective values are better;
-the tables show the average and the minimum--maximum range over the runs.
+Each method was run 20 times per instance (seeds 0--19). The greedy weighted
+2-regret heuristic was run once from every possible starting node, the random
+list-of-moves local search was run with 200 seeds, and MSLS was run with 400
+local-search iterations in each of 20 seeds. ILS and all LNS variants use a
+2500 ms time limit per run, the average running time of MSLS on the computer
+used for this experiment (MSLS was rerun on it to set the limit). Lower objective values are better; the tables show
+the average and the minimum--maximum range over the runs.
 
-\begin{table}[H]
-\centering
-\small
-\textbf{Objective function}\\[6pt]
-\begin{tabular}{l r@{\ (}r@{ -- }r@{)\hspace{1.5em}} r@{\ (}r@{ -- }r@{)}}
-\toprule
-Method & \multicolumn{3}{c}{Instance A} & \multicolumn{3}{c}{Instance B} \\
-\cmidrule(lr){2-4} \cmidrule(l){5-7}
-& \multicolumn{3}{c}{av (min -- max)} & \multicolumn{3}{c}{av (min -- max)} \\
+\begin{table}[H] 
+\centering 
+\small 
+\textbf{Objective function}\\[6pt] 
+\resizebox{\textwidth}{!}{\begin{tabular}{l r@{\ (}r@{ -- }r@{)\hspace{1.5em}} r@{\ (}r@{ -- }r@{)}} 
+\toprule 
+Method & \multicolumn{3}{c}{Instance A} & \multicolumn{3}{c}{Instance B} \\ 
+\cmidrule(lr){2-4} \cmidrule(l){5-7} 
+& \multicolumn{3}{c}{av (min -- max)} & \multicolumn{3}{c}{av (min -- max)} \\ 
 \midrule
-Greedy cycle weighted 2-regret      & 73\,350 & 72\,011 & 75\,532 & 57\,771 & 52\,906 & 63\,326 \\
-LS with list of moves, random start & 76\,235 & 73\,561 & 80\,874 & 52\,510 & 50\,333 & 56\,533 \\
-MSLS (400 LS runs)                  & 73\,660 & 73\,187 & 74\,256 & 50\,206 & 49\,675 & 50\,458 \\
-ILS, 16 random moves                & 71\,575 & 71\,484 & 71\,960 & 48\,277 & 48\,149 & 48\,665 \\
-LNS, random nodes                   & 72\,238 & 71\,696 & 73\,041 & 49\,127 & 48\,271 & 50\,542 \\
-LNS+LS, random nodes                & 72\,115 & 71\,698 & 72\,781 & 49\,067 & 48\,346 & 50\,410 \\
-LNS, 1 subpath                      & 72\,221 & 71\,857 & 73\,094 & 49\,867 & 49\,066 & 50\,719 \\
-LNS+LS, 1 subpath                   & 72\,112 & 71\,788 & 72\,894 & 49\,503 & 48\,304 & 50\,800 \\
-LNS, 5 subpaths                     & 71\,796 & 71\,704 & 72\,111 & 48\,995 & 48\,271 & 50\,566 \\
-LNS+LS, 5 subpaths                  & 71\,726 & 71\,679 & 71\,843 & 48\,716 & 48\,215 & 49\,362 \\
-\bottomrule
-\end{tabular}
+Greedy Cycle with weighted 2regret                                                & 73\,350 & 72\,011 & 75\,532 & 57\,771 & 52\,906 & 63\,326 \\
+Local Search with list of moves                                                   & 76\,235 & 73\,561 & 80\,874 & 52\,510 & 50\,333 & 56\,533 \\
+Multiple starts Local Search                                                      & 73\,660 & 73\,187 & 74\,256 & 50\,206 & 49\,675 & 50\,458 \\
+Iterative Local Search                                                            & 71\,575 & 71\,484 & 71\,960 & 48\,277 & 48\,149 & 48\,665 \\
+Large Neighborhood Search, random destroyer, no postprocessor                     & 72\,238 & 71\,696 & 73\,041 & 49\,127 & 48\,271 & 50\,542 \\
+Large Neighborhood Search, random destroyer, local search postprocessor           & 72\,115 & 71\,698 & 72\,781 & 49\,067 & 48\,346 & 50\,410 \\
+Large Neighborhood Search, 1 random chain destroyer, no postprocessor             & 72\,221 & 71\,857 & 73\,094 & 49\,867 & 49\,066 & 50\,719 \\
+Large Neighborhood Search, 1 random chain destroyer, local search postprocessor   & 72\,112 & 71\,788 & 72\,894 & 49\,503 & 48\,304 & 50\,800 \\
+Large Neighborhood Search, 5 random chains destroyer, no postprocessor            & 71\,796 & 71\,704 & 72\,111 & 48\,995 & 48\,271 & 50\,566 \\
+Large Neighborhood Search, 5 random chains destroyer, local search postprocessor  & 71\,726 & 71\,679 & 71\,843 & 48\,716 & 48\,215 & 49\,362 \\
+\bottomrule 
+\end{tabular}} 
 \end{table}
 
-\begin{table}[H]
-\centering
-\small
-\textbf{Running time [ms]}\\[6pt]
-\begin{tabular}{l r@{\ (}r@{ -- }r@{)\hspace{1.5em}} r@{\ (}r@{ -- }r@{)}}
-\toprule
-Method & \multicolumn{3}{c}{Instance A} & \multicolumn{3}{c}{Instance B} \\
-\cmidrule(lr){2-4} \cmidrule(l){5-7}
-& \multicolumn{3}{c}{av (min -- max)} & \multicolumn{3}{c}{av (min -- max)} \\
+\begin{table}[H] 
+\centering 
+\small 
+\textbf{Running time [ms]}\\[6pt] 
+\resizebox{\textwidth}{!}{\begin{tabular}{l r@{\ (}r@{ -- }r@{)\hspace{1.5em}} r@{\ (}r@{ -- }r@{)}} 
+\toprule 
+Method & \multicolumn{3}{c}{Instance A} & \multicolumn{3}{c}{Instance B} \\ 
+\cmidrule(lr){2-4} \cmidrule(l){5-7} 
+& \multicolumn{3}{c}{av (min -- max)} & \multicolumn{3}{c}{av (min -- max)} \\ 
 \midrule
-Greedy cycle weighted 2-regret      & 4.3 & 3.3 & 7.1 & 4.3 & 3.2 & 6.2 \\
-LS with list of moves, random start & 8.8 & 6.1 & 15.7 & 8.5 & 6.4 & 15.8 \\
-MSLS (400 LS runs)                  & 2516.0 & 2451.0 & 2592.0 & 2476.1 & 2388.7 & 2561.7 \\
-ILS, 16 random moves                & 2500.5 & 2500.0 & 2500.8 & 2500.3 & 2500.1 & 2500.7 \\
-LNS, random nodes                   & 2500.6 & 2500.0 & 2501.2 & 2500.6 & 2500.0 & 2501.1 \\
-LNS+LS, random nodes                & 2500.6 & 2500.1 & 2501.2 & 2500.8 & 2500.1 & 2501.8 \\
-LNS, 1 subpath                      & 2500.5 & 2500.1 & 2501.1 & 2500.5 & 2500.0 & 2501.3 \\
-LNS+LS, 1 subpath                   & 2500.6 & 2500.0 & 2501.3 & 2500.6 & 2500.0 & 2501.0 \\
-LNS, 5 subpaths                     & 2500.7 & 2500.0 & 2501.1 & 2500.5 & 2500.0 & 2501.2 \\
-LNS+LS, 5 subpaths                  & 2500.6 & 2500.1 & 2501.3 & 2500.7 & 2500.1 & 2501.2 \\
-\bottomrule
-\end{tabular}
+Greedy Cycle with weighted 2regret                                                & 4.257 & 3.292 & 7.096 & 4.297 & 3.169 & 6.235 \\
+Local Search with list of moves                                                   & 8.791 & 6.135 & 15.738 & 8.543 & 6.419 & 15.768 \\
+Multiple starts Local Search                                                      & 2515.992 & 2451.031 & 2591.982 & 2476.057 & 2388.659 & 2561.652 \\
+Iterative Local Search                                                            & 2500.484 & 2500.026 & 2500.821 & 2500.343 & 2500.054 & 2500.663 \\
+Large Neighborhood Search, random destroyer, no postprocessor                     & 2500.633 & 2500.029 & 2501.184 & 2500.633 & 2500.012 & 2501.115 \\
+Large Neighborhood Search, random destroyer, local search postprocessor           & 2500.578 & 2500.060 & 2501.178 & 2500.792 & 2500.094 & 2501.811 \\
+Large Neighborhood Search, 1 random chain destroyer, no postprocessor             & 2500.492 & 2500.066 & 2501.096 & 2500.499 & 2500.027 & 2501.310 \\
+Large Neighborhood Search, 1 random chain destroyer, local search postprocessor   & 2500.618 & 2500.037 & 2501.284 & 2500.554 & 2500.036 & 2501.037 \\
+Large Neighborhood Search, 5 random chains destroyer, no postprocessor            & 2500.723 & 2500.029 & 2501.060 & 2500.533 & 2500.017 & 2501.167 \\
+Large Neighborhood Search, 5 random chains destroyer, local search postprocessor  & 2500.588 & 2500.058 & 2501.255 & 2500.697 & 2500.068 & 2501.209 \\
+\bottomrule 
+\end{tabular}} 
 \end{table}
 
-\begin{table}[H]
-\centering
-\small
-\textbf{Iterations of the main loop}\\[6pt]
-\begin{tabular}{l r@{\ (}r@{ -- }r@{)\hspace{1.5em}} r@{\ (}r@{ -- }r@{)}}
-\toprule
-Method & \multicolumn{3}{c}{Instance A} & \multicolumn{3}{c}{Instance B} \\
-\cmidrule(lr){2-4} \cmidrule(l){5-7}
-& \multicolumn{3}{c}{av (min -- max)} & \multicolumn{3}{c}{av (min -- max)} \\
+\begin{table}[H] 
+\centering 
+\small 
+\textbf{Iterations of the main loop}\\[6pt] 
+\resizebox{\textwidth}{!}{\begin{tabular}{l r@{\ (}r@{ -- }r@{)\hspace{1.5em}} r@{\ (}r@{ -- }r@{)}} 
+\toprule 
+Method & \multicolumn{3}{c}{Instance A} & \multicolumn{3}{c}{Instance B} \\ 
+\cmidrule(lr){2-4} \cmidrule(l){5-7} 
+& \multicolumn{3}{c}{av (min -- max)} & \multicolumn{3}{c}{av (min -- max)} \\ 
 \midrule
-ILS, 16 random moves                & 3\,348 & 3\,266 & 3\,397 & 3\,419 & 3\,274 & 3\,518 \\
-LNS, random nodes                   & 2\,079 & 1\,881 & 2\,196 & 2\,056 & 1\,894 & 2\,242 \\
-LNS+LS, random nodes                & 1\,902 & 1\,732 & 1\,997 & 1\,902 & 1\,774 & 2\,034 \\
-LNS, 1 subpath                      & 2\,163 & 2\,066 & 2\,228 & 2\,193 & 2\,047 & 2\,330 \\
-LNS+LS, 1 subpath                   & 2\,054 & 1\,965 & 2\,138 & 2\,044 & 1\,904 & 2\,141 \\
-LNS, 5 subpaths                     & 2\,140 & 1\,984 & 2\,249 & 2\,100 & 1\,896 & 2\,259 \\
-LNS+LS, 5 subpaths                  & 1\,921 & 1\,809 & 2\,018 & 1\,921 & 1\,753 & 2\,031 \\
-\bottomrule
-\end{tabular}
+Iterative Local Search                                                            & 3\,348 & 3\,266 & 3\,397 & 3\,419 & 3\,274 & 3\,518 \\
+Large Neighborhood Search, random destroyer, no postprocessor                     & 2\,079 & 1\,881 & 2\,196 & 2\,056 & 1\,894 & 2\,242 \\
+Large Neighborhood Search, random destroyer, local search postprocessor           & 1\,902 & 1\,732 & 1\,997 & 1\,902 & 1\,774 & 2\,034 \\
+Large Neighborhood Search, 1 random chain destroyer, no postprocessor             & 2\,163 & 2\,066 & 2\,228 & 2\,193 & 2\,047 & 2\,330 \\
+Large Neighborhood Search, 1 random chain destroyer, local search postprocessor   & 2\,054 & 1\,965 & 2\,138 & 2\,044 & 1\,904 & 2\,141 \\
+Large Neighborhood Search, 5 random chains destroyer, no postprocessor            & 2\,140 & 1\,984 & 2\,249 & 2\,100 & 1\,896 & 2\,259 \\
+Large Neighborhood Search, 5 random chains destroyer, local search postprocessor  & 1\,921 & 1\,809 & 2\,018 & 1\,921 & 1\,753 & 2\,031 \\
+\bottomrule 
+\end{tabular}} 
 \end{table}
 
-The iteration count of ILS is the number of perturbation + local search runs
-after the local search of the starting solution, and the iteration count of
-LNS is the number of destroy--repair(--LS) candidates evaluated after the local
-search of the starting solution. All six LNS versions produced feasible
-solutions (100 distinct nodes) in every run; the objective values were
-recomputed independently from the node lists.
+The iteration counts above are counted by the LNS implementation. The initial
+solution is not included as an iteration; every later entry is the result of
+destroying, repairing, and optionally postprocessing one candidate.
 
-## Comparison of the destroy operators
+## Destroyer and postprocessor comparison
 
-Removing five short subpaths is the best destroy operator on both instances,
-both without (71\,796 on A, 48\,995 on B) and with local search (71\,726 and
-48\,716); with local search it also has the smallest spread on A
-(71\,679--71\,843). The random-node and the single-subpath operators are
-similar on A (about 72\,100--72\,240), but on B the single long subpath is
-clearly the worst (49\,867 without LS). When one long subpath of 30 nodes is
-removed, the greedy repair rebuilds one large region from scratch and it often
-returns a similar path, while removing scattered nodes changes only single
-insertions. Five shorter subpaths are a compromise: every gap is long enough to
-let the repair reorder and replace a group of neighboring nodes, and the gaps
-are spread over the whole cycle.
+The five-chain destroyer gives the best LNS averages on both instances. With
+the local-search postprocessor it obtains 71\,726 on average on instance A and
+48\,716 on instance B. The random destroyer and one-chain destroyer perform
+slightly worse. The postprocessor consistently improves the averages for all
+three destroyers, and it reduces the dispersion of the
+five-chain configuration on instance A.
 
-## Local search after the repair
+# Visualization of the best solutions 
+ 
+Each panel shows the best solution of one method from the tables. Node color 
+encodes the node cost (darker means more expensive). Selected nodes are drawn 
+larger, the solid line shows the cycle, and the dotted line marks the edge from 
+the last node back to the first. 
 
-Local search after the repair improved the average result for every destroy
-operator on both instances (e.g. 49\,867 $\to$ 49\,503 for one subpath and
-48\,995 $\to$ 48\,716 for five subpaths on B). It costs only 5--10\% of the
-iterations (2\,140 $\to$ 1\,921 for five subpaths on A), because the repaired
-solution is already close to a local optimum and the steepest local search with
-the list of moves needs only a few steps. Most of the time of an iteration is
-spent in the repair: one repair evaluates the insertion of about 130 unselected
-nodes into about 85 edges for each of the 30 inserted nodes, which takes about
-1 ms.
+![Best solutions for InstanceA](figures/lab7_plot_InstanceA.png) 
 
-## Comparison with the previous methods
+![Best solutions for InstanceB](figures/lab7_plot_InstanceB.png) 
 
-All LNS versions are much better than the construction heuristic, a single local
-search and MSLS. The best LNS version (five subpaths with LS) is on average
-1\,934 better than MSLS on A and 1\,490 better on B within the same time.
-ILS with 16 random moves (lab 6) is still slightly better: 71\,575 vs 71\,726 on
-A and 48\,277 vs 48\,716 on B, and it found the best solutions overall (71\,484
-and 48\,149). ILS performs about 3\,350 iterations versus about 1\,900--2\,150 of
-LNS, because its perturbation is cheap, whereas the greedy repair of LNS is the
-most expensive part of an iteration.
-
-# Visualization of the best solutions
-
-Each panel shows the best solution of one method from the tables. Node color
-encodes the node cost (darker means more expensive). Selected nodes are drawn
-larger, the solid line shows the cycle, and the dotted line marks the edge from
-the last node back to the first.
-
-![Best solutions for instance A](figures/lab7_plot_InstanceA.png)
-
-![Best solutions for instance B](figures/lab7_plot_InstanceB.png)
-
-# Best solutions
-
-The best solutions found by each LNS version. Node numbers are 0-based, as in
-the data and source code.
+# Best solutions 
+ 
+The following are the best solutions found by each tested LNS destroyer and
+postprocessing configuration. Node numbers are 0-based, as in the data and
+source code.
 
 ## Instance A
 
-**LNS, random nodes** (objective 71\,696)
+**Large Neighborhood Search, random destroyer, no postprocessor** (objective 71,696) 
 
 ```
  73  45  87 141  30 187 189   2 171  92 104 129  69 127  97 160 123 100 152 108
@@ -293,9 +249,9 @@ the data and source code.
  35  51  16  67 144 140  53 179  52 177  36 131  33   9  54   8 142 164 186 136
 184 178  29 101   1 169   3  50  93  47 130 159 146 170 153 193  78  88 107  64
  57 182 138 151  42  89 113 106 150 174 176  72 134  84  58 158 192 181 114 135
-```
+``` 
 
-**LNS+LS, random nodes** (objective 71\,698)
+**Large Neighborhood Search, random destroyer, local search postprocessor** (objective 71,698) 
 
 ```
  35  51  16  67 144 140  53 179  52 177  36 131  33   9  54   8 142 164 186 136
@@ -303,9 +259,9 @@ the data and source code.
  64  57 182 138 151  42  89 113 106 150 174 176  72 134  84  58 158 192 181 114
 135  73  45  87 141  30 187 189   2 171  92  69 127  97 160  83 123 100 152 108
  49  11 168  63 149 116  60  31  48  80  91 157  71   4  76 132 180  28 102 185
-```
+``` 
 
-**LNS, 1 subpath** (objective 71\,857)
+**Large Neighborhood Search, 1 random chain destroyer, no postprocessor** (objective 71,857) 
 
 ```
  29 101  59   1 169   3  50  93  47 130 159 146 170 153 193  78  88 107  64  57
@@ -313,9 +269,9 @@ the data and source code.
  87 141 189   2 171 187  30 161 127  97 160  83 123 100 152 108  49  11 168  63
 149 116  60  31  48  80  91 157  71   4  76 132 180  28 102 185  35  51  16  67
 144 140  53 179  52 177  36 131  33   9  54   8 174  85 142 164 186 136 184 178
-```
+``` 
 
-**LNS+LS, 1 subpath** (objective 71\,788)
+**Large Neighborhood Search, 1 random chain destroyer, local search postprocessor** (objective 71,788) 
 
 ```
  11  63 149 116 168  97 127 161  30 187 171   2 189 141  87  45  73 135 114 181
@@ -323,9 +279,9 @@ the data and source code.
  78 193 153 170 146 159 130  93  50   3 169   1  47  37 147 101  29 178 184 136
 186 164 142   8  54   9  33 131  36 177  52 179  53 140 144  67  16  51  35 185
 102  28 180 132  76   4  71 157  91  80  48  31  60 108 152 100 123  83 160  49
-```
+``` 
 
-**LNS, 5 subpaths** (objective 71\,704)
+**Large Neighborhood Search, 5 random chains destroyer, no postprocessor** (objective 71,704) 
 
 ```
 158  58  84 134  72 176 174 150 106 113  89  42 151 138 182  57  64 107  88  78
@@ -333,9 +289,9 @@ the data and source code.
   8  54   9  33 131  36 177  52 179  53 140 144  67  16  51  35 156  28 180 132
  76   4  71 157  91  80  48  31  60 116 149  63 168  11  49 108 152 100 123  83
 160  97 127  69  92 171   2 189 187  30 141  87 102 185  45  73 135 114 181 192
-```
+``` 
 
-**LNS+LS, 5 subpaths** (objective 71\,679)
+**Large Neighborhood Search, 5 random chains destroyer, local search postprocessor** (objective 71,679) 
 
 ```
  97 160 123 100 152 108  49  11 168  63 149 116  60  31  48  80  91 157  71   4
@@ -343,11 +299,11 @@ the data and source code.
  54   8 174  85  93  50   3 169   1 164 186 136 184 178  29 101 147  47 130 159
 146 170 153 193  78  88 107  64  57 182 138 151  42  89 106 150 176  72 134  84
  58 158 192 181 114 135  73  45  87 141  30 187 189   2 171  92 104 129  69 127
-```
+``` 
 
 ## Instance B
 
-**LNS, random nodes** (objective 48\,271)
+**Large Neighborhood Search, random destroyer, no postprocessor** (objective 48,271) 
 
 ```
  81  70 190 104  76 185  57  89 156  48  96 198 121  42 147 116  37 146  13 149
@@ -355,9 +311,9 @@ the data and source code.
 170 125  26 154 140  47  38  21  30 183 189  69 160 172 136 133 120  72  46 184
   3 151  27  66  67  24  34 152 181 167  73  59  85  51  82  87 179  88  99 171
  17  74  20   2  14 153  90 129 127  80 192 162  54  78  10 114 196  61 105  94
-```
+``` 
 
-**LNS+LS, random nodes** (objective 48\,346)
+**Large Neighborhood Search, random destroyer, local search postprocessor** (objective 48,346) 
 
 ```
  74  20   2  14 153  90 129 127  80 192 162  54  78  10 114 196  61 105  94  81
@@ -365,9 +321,9 @@ the data and source code.
  28 145  65 178 103 132  29   6 197  36  62 175 134  45 157  60  40  71 155 115
 170 125  26 154 140  47  38  21  30 183  69 160 172 136 133 120 117  72  46 184
   3 151  98  73  59  85  51 167 181 152  34  24  67 179  82  87  88  99 171  17
-```
+``` 
 
-**LNS, 1 subpath** (objective 49\,066)
+**Large Neighborhood Search, 1 random chain destroyer, no postprocessor** (objective 49,066) 
 
 ```
 191 130 121 198  96  48 156  89  57 185  76 162 192  54 104 190  70 187 169  81
@@ -375,9 +331,9 @@ the data and source code.
 179  87  82  51  85  59  73 167 181 152  34  24  98 151   3 184  46  72 117   8
 120 133 136 172 160  69 124  64  33  40 155  71  60 157  45 134 175  62  36 197
 132  29   6 180 115 170 125 177  65 145  28 149 158  26 154 140  47  38  21  30
-```
+``` 
 
-**LNS+LS, 1 subpath** (objective 48\,304)
+**Large Neighborhood Search, 1 random chain destroyer, local search postprocessor** (objective 48,304) 
 
 ```
  72  46 184   3 151  98  34  24  67 152 181 167  73  59  85  51 179  82  87  88
@@ -385,9 +341,9 @@ the data and source code.
 105  94  81  70 190 104  76 185  57  89 156  48  96 198 121  42 147 116  37 146
  13 149  28 145  65 178 103 132  29   6 197  36  62 175 134  45 157  60  40  71
 155 115 170 177 125  26 154 140  47  38  21  30 183 189  69 160 172 136 133 120
-```
+``` 
 
-**LNS, 5 subpaths** (objective 48\,271)
+**Large Neighborhood Search, 5 random chains destroyer, no postprocessor** (objective 48,271) 
 
 ```
  51  82  87 179  88  99 171  17  74  20   2  14 153  90 129 127  80 192 162  54
@@ -395,9 +351,9 @@ the data and source code.
  42 147 116  37 146  13 149  28 145  65 178 103 132  29   6 197  36  62 175 134
  45 157  60  40  71 155 115 170 125  26 154 140  47  38  21  30 183 189  69 160
 172 136 133 120  72  46 184   3 151  27  66  67  24  34 152 181 167  73  59  85
-```
+``` 
 
-**LNS+LS, 5 subpaths** (objective 48\,215)
+**Large Neighborhood Search, 5 random chains destroyer, local search postprocessor** (objective 48,215) 
 
 ```
 149  28 145  65 178 103 132  29   6 197  36  62 175 134  45 157  60  40  71 155
@@ -405,47 +361,53 @@ the data and source code.
  46 184   3 151  27  66  67  24  34 152 181 167  73  59  85  51  82  87 179  88
  99 171  17  74  20   2  14 153  90 129 127  80 192 162  54  78  10 114 196  61
 105  94  81  70 190 104  76 185  57  89  48  96 198 121  42 147 116  37 146  13
-```
+``` 
 
 # Solution checker
 
-<!-- TODO before submitting: check the best LNS solutions in Solution checker.xlsx -->
-
-All solutions of all runs were verified with an independent script: every
-solution contains 100 distinct nodes from 0--199, and the objective recomputed
-from the instance data matches the value reported by our program.
+The objective values in the report are computed with `Problem::evaluate`, which
+adds Euclidean cycle length to the costs of the 100 selected nodes. Before
+submission, the listed cycles can also be verified in the Solution
+checker.xlsx spreadsheet by checking that they contain 100 node numbers, with
+no duplicates and no number outside 0--199.
 
 # Conclusions
 
-- **LNS is a strong method.** All six versions are clearly better than the
-  best construction heuristic, a single local search and MSLS run for the same
-  time (best LNS: 71\,726 on A and 48\,716 on B on average, MSLS: 73\,660 and
-  50\,206).
-- **Removing several short subpaths is the best destroy operator**, better
-  than removing random nodes and much better than removing one long subpath
-  (on instance B). It keeps some locality (neighboring nodes are removed
-  together) but spreads the changes over the whole cycle.
-- **Local search after the repair always helps.** It improves every version
-  on both instances, and it costs only 5--10\% of the iterations, because the
-  greedy repair dominates the running time of one iteration.
-- **ILS from lab 6 remains slightly better than LNS** in our implementation
-  (71\,575 and 48\,277 on average). Its iterations are cheaper (about 3\,350
-  vs 2\,000 in 2.5 s); a faster repair (e.g. keeping the insertion costs between
-  the steps of the greedy heuristic) would allow LNS to make more iterations.
-- **Time limit.** As the experiment was run on a different machine than the
-  previous one, MSLS was rerun on it and the time limit of ILS and LNS was set to
-  its average running time (2.5 s).
+- **LNS improves on the tested random local-search baseline.** The 5-chain
+  configuration with postprocessing averages 71\,726 on instance A, while
+  one random local-search run averages 76\,235. It also improves instance B
+  from 52\,510 to 48\,716.
+- **Five-chain destruction is generally more effective than one chain or
+  random destruction.** It averages 71\,796 on instance A without
+  postprocessing and 48\,995 on instance B, both better than the corresponding
+  random and one-chain configurations.
+- **Local-search postprocessing is beneficial for random and one-chain
+  destruction.** It lowers the averages from 72\,238 to 72\,115 and from
+  49\,127 to 49\,067 for random destruction, and from 72\,221 to 72\,112 and
+  from 49\,867 to 49\,503 for one-chain destruction.
+- **Postprocessing also helps for five chains.** It improves instance A from
+  71\,796 to 71\,726 and instance B from 48\,995 to 48\,716. The best observed
+  LNS solution on instance B is also obtained with postprocessing (48\,215).
+- **ILS remains the strongest tested approach.** It averages 71\,575 on
+  instance A and 48\,277 on instance B, compared with 71\,726 and 48\,716 for
+  the best 5-chain LNS configurations in the respective primary comparison.
+- **The time budget is the dominant stopping condition.** All LNS and ILS runs
+  take approximately 2500 ms, while MSLS takes about 2516 ms on instance A and
+  2476 ms on instance B. LNS performs roughly 1900--2200 candidates in the
+  fixed time, whereas the first random local-search run takes only a few ms.
 
 # Source code and data
 
-LNS is implemented in `src/lab7_algos/LNS.cpp`, and the destroy operators in
-`src/lab7_algos/RandomDestroyer.cpp` (random nodes) and
-`src/lab7_algos/RandomChainDestroyer.cpp` (one or several subpaths). Repair is
-`src/lab2_algos/GreedyCycle_2regret.cpp` and the local search
-`src/lab5_algos/ListOfMovesSolver.cpp`. MSLS and ILS are in `src/lab6_algos/`.
+LNS is implemented in `src/lab7_algos/LNS.cpp`, and the random and random-chain
+destroyers are implemented in `src/lab7_algos/RandomDestroyer.cpp` and
+`src/lab7_algos/RandomChainDestroyer.cpp`. Repair is performed with
+`src/lab2_algos/GreedyCycle_2regret.cpp`, and optional postprocessing uses
+`src/lab5_algos/ListOfMovesSolver.cpp`.
 
-The experiment is defined in `tests/lab7_test.py` and run with
-`python3 scripts/run_experiment.py`; the raw results are in
-`results/lab7_results.json`. The tables are generated with
-`python3 scripts/generate_tables.py` and the figures and node lists with
-`python3 scripts/plot_best_solution.py`.
+The experimental configurations are defined in `tests/lab7_test.py`. Raw
+results are stored in `results/lab7_results.json`, and the tables and best
+solution listings can be regenerated with
+`python3 scripts/generate_tables.py --data results/lab7_results.json` and
+`python3 scripts/plot_best_solution.py`. The visualization is generated in
+`reports/figures/lab7_plot_InstanceA.png` and
+`reports/figures/lab7_plot_InstanceB.png`.

@@ -77,7 +77,7 @@ def main():
         generate_statistics_table("Objective function", data, lambda d: d["objective"], vf = lambda v: f"{v:,}".replace(",","\\,"))
 
         # Generate time table
-        generate_statistics_table("Running time [ms]", data, lambda d: d["time"]/1000, vf = lambda v: f"{v:.1f}")
+        generate_statistics_table("Running time [ms]", data, lambda d: d["time"]/1000, vf = lambda v: f"{v:.3f}")
 
         for label, value_mapper, vf in module.measurements():
             generate_statistics_table(label, data, value_mapper, vf)
